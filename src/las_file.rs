@@ -297,6 +297,7 @@ impl LASFile {
             },
             curve_data,
             string_data: None,
+            dtype_override: None,
         };
         let orig = mnemonic.to_string();
         self.curves_section.items.push(ItemWrapper::Curve(item));
@@ -331,6 +332,7 @@ impl LASFile {
             },
             curve_data,
             string_data: None,
+            dtype_override: None,
         };
         let idx = ix.min(self.curves_section.items.len());
         let orig = mnemonic.to_string();
@@ -526,6 +528,7 @@ impl LASFile {
                     },
                     curve_data: col_data,
                     string_data: None,
+                    dtype_override: None,
                 };
                 self.curves_section.items.push(ItemWrapper::Curve(item));
             }
@@ -563,6 +566,7 @@ impl LASFile {
             },
             curve_data: index_data,
             string_data: None,
+            dtype_override: None,
         };
         self.curves_section.items.push(ItemWrapper::Curve(index_item));
 
@@ -582,6 +586,7 @@ impl LASFile {
                 },
                 curve_data: col_data,
                 string_data: None,
+                dtype_override: None,
             };
             self.curves_section.items.push(ItemWrapper::Curve(item));
         }
@@ -651,6 +656,7 @@ impl LASFile {
                 },
                 curve_data: data,
                 string_data: None,
+                dtype_override: None,
             };
             self.curves_section.items.push(ItemWrapper::Curve(item));
             self.curves_section.assign_duplicate_suffixes_for(&name);
@@ -682,9 +688,11 @@ impl LASFile {
                     continue; // index column, handled separately
                 }
                 if let Some(ref strings) = c.string_data {
-                    // String column → pandas object dtype
+                    // String column → numpy object array for pandas compatibility
+                    let np = py.import("numpy")?;
                     let list = pyo3::types::PyList::new(py, strings.iter().map(|s| s.as_str()))?;
-                    data_dict.set_item(col_name, list)?;
+                    let arr = np.call_method1("array", (list,))?;
+                    data_dict.set_item(col_name, arr)?;
                 } else {
                     let arr = numpy::PyArray1::from_vec(py, c.curve_data.clone());
                     data_dict.set_item(col_name, arr)?;
@@ -1769,6 +1777,7 @@ fn parse_curve_section(
                     },
                     curve_data: Vec::new(),
                     string_data: None,
+                    dtype_override: None,
                 };
                 let orig = item.header.original_mnemonic.clone();
                 section.items.push(ItemWrapper::Curve(item));
@@ -1816,6 +1825,7 @@ fn assign_data_to_curves(curves_section: &mut SectionItems, columns: Vec<Vec<f64
                 },
                 curve_data: columns[col_idx].clone(),
                 string_data: None,
+                dtype_override: None,
             };
             curves_section.items.push(ItemWrapper::Curve(item));
         }
@@ -1972,9 +1982,54 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
     let mut las = read_las(&content, ignore_header_errors, mnemonic_case.as_deref(), ignore_data, null_policy, read_policy, &ignore_comments)?;
     las.encoding = detected_encoding;
 
-    // Apply index_unit override
-    if let Some(unit) = index_unit_override {
-        las.index_unit = Some(unit);
+    // Apply index_unit override — also update curve and well units
+    if let Some(ref unit) = index_unit_override {
+        las.index_unit = Some(unit.clone());
+        // Update first curve's unit
+        if let Some(ItemWrapper::Curve(ref mut c)) = las.curves_section.items.first_mut() {
+            c.header.unit = unit.clone();
+        }
+        // Update STRT/STOP/STEP units
+        for name in &["STRT", "STOP", "STEP"] {
+            if let Some(idx) = las.well_section.find_index_by_mnemonic(name) {
+                if let ItemWrapper::Header(ref mut h) = las.well_section.items[idx] {
+                    h.unit = unit.clone();
+                }
+            }
+        }
+    }
+
+    // Apply dtypes kwarg
+    let dtypes_raw = kwargs.and_then(|kw| kw.get_item("dtypes").ok().flatten());
+    if let Some(ref dt) = dtypes_raw {
+        if let Ok(false_val) = dt.extract::<bool>() {
+            if !false_val {
+                // dtypes=False → store all curve data as strings
+                for item in &mut las.curves_section.items {
+                    if let ItemWrapper::Curve(ref mut c) = item {
+                        if c.string_data.is_none() {
+                            let strings: Vec<String> = c.curve_data.iter()
+                                .map(|v| if v.is_nan() { String::new() } else { format!("{}", v) })
+                                .collect();
+                            c.string_data = Some(strings);
+                        }
+                    }
+                }
+            }
+        } else if let Ok(dict) = dt.downcast::<PyDict>() {
+            // dtypes={"GR": int} → set dtype override on specific curves
+            for (key, dtype_obj) in dict.iter() {
+                let name: String = key.extract()?;
+                if let Some(idx) = las.curves_section.find_index_by_mnemonic(&name) {
+                    if let ItemWrapper::Curve(ref mut c) = las.curves_section.items[idx] {
+                        let type_name = dtype_obj.str().map(|s| s.to_string()).unwrap_or_default();
+                        if type_name.contains("int") {
+                            c.dtype_override = Some("int".to_string());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Ok(las)

@@ -279,6 +279,7 @@ pub struct CurveItem {
     pub header: HeaderItem,
     pub curve_data: Vec<f64>,
     pub string_data: Option<Vec<String>>,
+    pub dtype_override: Option<String>, // "int", "str", etc.
 }
 
 #[pymethods]
@@ -322,6 +323,7 @@ impl CurveItem {
             },
             curve_data,
             string_data: None,
+            dtype_override: None,
         })
     }
 
@@ -394,13 +396,25 @@ impl CurveItem {
 
     #[getter]
     fn data<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
-        // Return string data if available, otherwise numpy float array
+        // Return string data if available
         if let Some(ref strings) = self.string_data {
+            let np = py.import("numpy")?;
             let list = PyList::new(py, strings.iter().map(|s| s.as_str()))?;
-            Ok(list.into_any().unbind())
-        } else {
-            Ok(PyArray1::from_vec(py, self.curve_data.clone()).into_any().unbind())
+            let arr = np.call_method1("array", (list,))?;
+            return Ok(arr.unbind());
         }
+        // Check for dtype override
+        if let Some(ref dtype) = self.dtype_override {
+            if dtype == "int" {
+                let np = py.import("numpy")?;
+                let int_data: Vec<i64> = self.curve_data.iter()
+                    .map(|v| if v.is_nan() { 0i64 } else { *v as i64 })
+                    .collect();
+                let arr = numpy::PyArray1::from_vec(py, int_data);
+                return Ok(arr.into_any().unbind());
+            }
+        }
+        Ok(PyArray1::from_vec(py, self.curve_data.clone()).into_any().unbind())
     }
 
     #[setter]
@@ -908,6 +922,7 @@ impl SectionItems {
                     },
                     curve_data: c.curve_data.clone(),
                     string_data: None,
+                    dtype_override: None,
                 };
                 if add {
                     let wrapper = ItemWrapper::Curve(new_item.clone());
@@ -950,6 +965,7 @@ impl SectionItems {
                 },
                 curve_data: vec![f64::NAN; data_len],
                 string_data: None,
+                dtype_override: None,
             };
             if add {
                 let wrapper = ItemWrapper::Curve(new_item.clone());
