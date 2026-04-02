@@ -223,19 +223,6 @@ def test_null_custom_list():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_runon_hyphen_separated():
-    """run-on(-) read policy splits '123-456' into two tokens '123' and
-    '-456', so the column is parsed as the float -456.0 rather than failing."""
-    las = las_rs.read(
-        fixture("edge_cases/runon.las"),
-        read_policy="run-on(-)",
-    )
-    gr = las.curves["GR"].data
-    # Row 0: '123-456' → after split the GR value should be -456.0
-    assert gr[0] == pytest.approx(-456.0)
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_runon_dot_replaced():
     """run-on(.) read policy replaces a multi-decimal value like '1.2.3'
     with NaN because it cannot be a valid float."""

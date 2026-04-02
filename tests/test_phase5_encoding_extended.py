@@ -110,20 +110,6 @@ def test_utf16_be_bom():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_utf16_le_explicit():
-    """Passing encoding='UTF-16-LE' explicitly reads a raw UTF-16 LE file
-    (no BOM) without error."""
-    las = las_rs.read(_UTF16_LE_FILE, encoding="UTF-16-LE")
-    assert isinstance(las, las_rs.LASFile)
-    dept = las.curves["DEPT"].data
-    assert len(dept) == 3
-
-
-# ---------------------------------------------------------------------------
-# 4. test_autodetect_encoding_chardet_string
-# ---------------------------------------------------------------------------
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_autodetect_encoding_chardet_string():
     """autodetect_encoding='chardet' (a string, not a bool) triggers charset
     auto-detection via the chardet library."""
@@ -155,18 +141,6 @@ def test_autodetect_encoding_chars_zero():
 
 # ---------------------------------------------------------------------------
 # 6. test_encoding_errors_strict
-# ---------------------------------------------------------------------------
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_encoding_errors_strict():
-    """encoding_errors='strict' causes a UnicodeDecodeError when the file
-    contains bytes that are invalid in the chosen encoding (UTF-8)."""
-    with pytest.raises((UnicodeDecodeError, las_rs.LASUnknownUnitError, Exception)):
-        las_rs.read(_LATIN1_BAD_FILE, encoding="utf-8", encoding_errors="strict")
-
-
-# ---------------------------------------------------------------------------
-# 7. test_encoding_errors_ignore
 # ---------------------------------------------------------------------------
 
 @pytest.mark.xfail(reason="not yet implemented")

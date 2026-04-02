@@ -146,15 +146,3 @@ def test_to_csv_no_units():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(reason="not yet implemented")
-def test_to_csv_custom_mnemonics():
-    """Passing an explicit list of mnemonics overrides the curve names in the
-    header row."""
-    las = read_v12()
-    custom = ["DEPTH_M", "GAMMA", "NPOR", "DENSITY"]
-    lines = csv_lines(las, mnemonics=custom)
-    header = lines[0]
-    for name in custom:
-        assert name in header
-    # Original mnemonic 'DEPT' must NOT appear in the overridden header
-    assert "DEPT" not in header

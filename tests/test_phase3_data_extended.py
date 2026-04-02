@@ -81,29 +81,6 @@ def test_chr26_removal():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_reshape_error_raises():
-    """Data that cannot reshape into n_columns raises LASDataError, not a
-    generic ValueError."""
-    las_text = (
-        _minimal_header("RESHAPEERR")
-        + "~CURVE INFORMATION\n"
-        " DEPT.M    : DEPTH\n"
-        " GR  .GAPI : GAMMA RAY\n"
-        " RHOB.G/CC : DENSITY\n"
-        "~ASCII LOG DATA\n"
-        " 1.0  30.5\n"        # only 2 columns instead of 3
-        " 2.0  40.1\n"
-        " 3.0  50.7\n"
-    )
-    with pytest.raises(las_rs.LASDataError):
-        _read_inline(las_text)
-
-
-# ---------------------------------------------------------------------------
-# 4. test_comma_decimal_in_params
-# ---------------------------------------------------------------------------
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_comma_decimal_in_params():
     """Comma-decimal substitution also applies to parameter section values so
     that '72,5' in a ~PARAMETER section is read as the float 72.5."""

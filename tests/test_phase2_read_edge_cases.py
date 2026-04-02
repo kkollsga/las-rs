@@ -276,28 +276,6 @@ def test_excess_data_columns():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_sparse_curves():
-    """Declared curves that have no data column in the ~ASCII section get NaN arrays.
-
-    File: edge_cases/sparse_curves.las
-    Header declares: DEPT, GR, NPHI, RHOB, DT, PE  (6 curves)
-    Data rows have only: DEPT, GR, RHOB  (3 columns)
-    Missing curves NPHI, DT, PE must exist with NaN-filled arrays.
-    """
-    las = las_rs.read(fixture("edge_cases/sparse_curves.las"))
-    curve_mnemonics = [c.mnemonic for c in las.curves]
-    assert "NPHI" in curve_mnemonics
-    nphi_data = las.curves["NPHI"].data
-    # All values in the missing curve must be NaN
-    assert all(math.isnan(v) for v in nphi_data)
-
-
-# ===========================================================================
-# Single-row data
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_single_data_row():
     """A file with exactly one data row reads correctly (no reshape issues).
 

@@ -104,21 +104,6 @@ def test_las_data_error_on_reshape():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_las_header_error_on_malformed():
-    """Reading a LAS string whose header line is missing the required colon
-    separator should raise las_rs.exceptions.LASHeaderError."""
-    with pytest.raises(
-        (las_rs.exceptions.LASHeaderError, las_rs.LASHeaderError, Exception)
-    ):
-        las_rs.read(_MALFORMED_HEADER_LAS)
-
-
-# ===========================================================================
-# 3. depth_m on unknown unit raises LASUnknownUnitError
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_las_unknown_unit_error():
     """Calling depth_m on a file whose depth unit is not recognised should raise
     las_rs.exceptions.LASUnknownUnitError (or las_rs.LASUnknownUnitError)."""

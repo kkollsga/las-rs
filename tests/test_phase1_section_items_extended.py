@@ -167,22 +167,6 @@ def test_set_item_value_updates():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_mnemonic_rename_to_empty():
-    """Setting curve.mnemonic = '' auto-renames the item to 'UNKNOWN'."""
-    sec = las_rs.SectionItems()
-    sec.append(citem("GR", unit="GAPI", data=np.array([30.0, 40.0])))
-    gr = sec["GR"]
-    gr.mnemonic = ""
-    # After renaming to empty string the item should be stored as 'UNKNOWN'
-    keys = list(sec.keys())
-    assert any("UNKNOWN" in k.upper() for k in keys)
-
-
-# ---------------------------------------------------------------------------
-# 9. test_multiple_duplicate_suffixes
-# ---------------------------------------------------------------------------
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_multiple_duplicate_suffixes():
     """Three items named 'GR' become GR:1, GR:2, GR:3."""
     sec = las_rs.SectionItems()

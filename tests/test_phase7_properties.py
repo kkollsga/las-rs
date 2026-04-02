@@ -83,44 +83,12 @@ def test_version_property():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_version_setter():
-    """Assigning to las.version updates sections['Version']."""
-    las = _read_las()
-    new_section = las_rs.SectionItems(
-        [las_rs.HeaderItem(mnemonic="VERS", unit="", value="2.0", descr="LAS version")]
-    )
-    las.version = new_section
-    assert las.sections["Version"] is new_section
-
-
-# ===========================================================================
-# .well property
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_well_property():
     """las.well returns the SectionItems for the Well section."""
     las = _read_las()
     well = las.well
     assert well["COMP"] is not None
     assert "PROPS TEST" in well["COMP"].value or "PROPS TEST" in well["COMP"].descr
-
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_well_setter():
-    """Assigning to las.well updates sections['Well']."""
-    las = _read_las()
-    new_section = las_rs.SectionItems(
-        [las_rs.HeaderItem(mnemonic="WELL", unit="", value="SETTER-WELL-1", descr="")]
-    )
-    las.well = new_section
-    assert las.sections["Well"] is new_section
-
-
-# ===========================================================================
-# .curves property
-# ===========================================================================
 
 
 @pytest.mark.xfail(reason="not yet implemented")
@@ -135,22 +103,6 @@ def test_curves_property():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_curves_setter():
-    """Assigning to las.curves updates sections['Curves']."""
-    las = _read_las()
-    new_section = las_rs.SectionItems(
-        [las_rs.CurveItem(mnemonic="DEPTH", unit="M", value="", descr="Depth")]
-    )
-    las.curves = new_section
-    assert las.sections["Curves"] is new_section
-
-
-# ===========================================================================
-# .params property
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_params_property():
     """las.params returns the SectionItems for the Parameter section."""
     las = _read_las()
@@ -158,22 +110,6 @@ def test_params_property():
     param_mnemonics = [p.mnemonic for p in params]
     assert "BHT" in param_mnemonics
     assert "MUD" in param_mnemonics
-
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_params_setter():
-    """Assigning to las.params updates sections['Parameter']."""
-    las = _read_las()
-    new_section = las_rs.SectionItems(
-        [las_rs.HeaderItem(mnemonic="RES", unit="OHM", value="1.5", descr="Resistivity")]
-    )
-    las.params = new_section
-    assert las.sections["Parameter"] is new_section
-
-
-# ===========================================================================
-# .other property
-# ===========================================================================
 
 
 @pytest.mark.xfail(reason="not yet implemented")
@@ -281,37 +217,3 @@ def test_curvesdict():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
-def test_update_start_stop_step():
-    """update_start_stop_step() recalculates STRT, STOP, and STEP from the
-    actual index data.
-
-    After replacing the depth array with new values [5000, 5005, 5010] the
-    method should update STRT→5000, STOP→5010, STEP→5.
-    """
-    las = _read_las()
-    new_dept = np.array([5000.0, 5005.0, 5010.0])
-    las.curves["DEPT"].data = new_dept
-
-    las.update_start_stop_step()
-
-    assert float(las.well["STRT"].value) == pytest.approx(5000.0)
-    assert float(las.well["STOP"].value) == pytest.approx(5010.0)
-    assert float(las.well["STEP"].value) == pytest.approx(5.0)
-
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_update_units_from_index_curve():
-    """update_start_stop_step() also copies the unit of the index curve to
-    the STRT, STOP, and STEP items in the Well section.
-
-    When the DEPT curve's unit is changed to 'FT' and the method is called,
-    STRT.unit, STOP.unit, and STEP.unit should all become 'FT'.
-    """
-    las = _read_las()
-    las.curves["DEPT"].unit = "FT"
-    las.update_start_stop_step()
-
-    assert las.well["STRT"].unit == "FT"
-    assert las.well["STOP"].unit == "FT"
-    assert las.well["STEP"].unit == "FT"

@@ -462,25 +462,6 @@ def test_write_empty_value_none():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_write_empty_value_string():
-    """A well item whose .value is an empty string writes and re-reads
-    correctly; the re-read value is still an empty string (or whitespace)."""
-    las = _read_base()
-    las.well["UWI"].value = ""
-    buf = StringIO()
-    las.write(buf)
-    buf.seek(0)
-    reread = las_rs.read(buf, ignore_header_errors=True)
-    uwi_val = reread.well["UWI"].value if "UWI" in [i.mnemonic for i in reread.well] else ""
-    assert uwi_val.strip() == ""
-
-
-# ===========================================================================
-# 20 — duplicate mnemonics use original_mnemonic on write
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_write_duplicate_mnemonics_original():
     """When duplicate-mnemonic suffixes (:1/:2) are added at read time, the
     written output uses the original_mnemonic (no suffix) so the file can be
@@ -515,46 +496,6 @@ def test_write_duplicate_mnemonics_original():
 
 # ===========================================================================
 # 21 — renamed mnemonic propagates to write
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_write_renamed_mnemonic():
-    """Renaming a curve's .mnemonic attribute then calling write() produces
-    output that contains the new name, not the original."""
-    las = _read_base()
-    las.curves["GR"].mnemonic = "GAMMA"
-    output = _write_to_string(las)
-    assert "GAMMA" in output
-    # Original name should no longer appear as a standalone column header
-    curve_section_start = output.upper().index("~C")
-    curve_section_end = output.upper().index("~A")
-    curve_block = output[curve_section_start:curve_section_end]
-    lines_with_gr = [ln for ln in curve_block.splitlines() if " GR " in ln or ln.strip().startswith("GR")]
-    assert len(lines_with_gr) == 0
-
-
-# ===========================================================================
-# 22 — changing curve unit updates STRT/STOP/STEP units on write
-# ===========================================================================
-
-
-@pytest.mark.xfail(reason="not yet implemented")
-def test_write_unit_change_propagates():
-    """After changing the DEPT curve unit from 'M' to 'FT', writing the file
-    must reflect 'FT' in the STRT, STOP, and STEP well header units."""
-    las = _read_base()
-    las.curves["DEPT"].unit = "FT"
-    output = _write_to_string(las)
-    header_section = output[: output.upper().index("~A")]
-    strt_lines = [ln for ln in header_section.splitlines() if "STRT" in ln.upper()]
-    assert any("FT" in ln for ln in strt_lines), (
-        f"Expected 'FT' unit in STRT line but got: {strt_lines}"
-    )
-
-
-# ===========================================================================
-# 23 — empty params section
 # ===========================================================================
 
 

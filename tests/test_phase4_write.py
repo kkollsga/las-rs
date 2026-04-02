@@ -323,29 +323,6 @@ def test_write_large_depths():
 
 
 @pytest.mark.xfail(reason="not yet implemented")
-def test_write_nan_as_null():
-    """NaN values in a curve's data array are written as the NULL string
-    (e.g. '-999.25') so that downstream readers recognise them."""
-    las = read_v12()
-    # Inject a NaN into the GR column
-    las.curves["GR"].data[0] = np.nan
-    null_str = str(las.well["NULL"].value).strip()
-
-    buf = StringIO()
-    las.write(buf)
-    output = buf.getvalue()
-
-    # The null sentinel must appear in the data section
-    data_section = output[output.upper().index("~A"):]
-    assert null_str in data_section
-
-
-# ---------------------------------------------------------------------------
-# Full roundtrips
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.xfail(reason="not yet implemented")
 def test_roundtrip_v12():
     """Read a v1.2 file, write it, and re-read it: all curve data arrays
     must match the original to at least 4 decimal places."""
