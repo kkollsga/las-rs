@@ -1,43 +1,106 @@
-   0.024897375s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint dirty for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: false }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.024913667s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "numpy", old_fingerprint: 813717602152563743, new_name: "numpy", new_fingerprint: 4963796047116263229 }
-   0.025968042s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="numpy"}: cargo::core::compiler::fingerprint: fingerprint dirty for numpy v0.24.0/Check { test: false }/TargetInner { ..: lib_target("numpy", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/numpy-0.24.0/src/lib.rs", Edition2021) }
-   0.025974417s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="numpy"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 5448694090275109273, new_name: "build_script_build", new_fingerprint: 9035892325245521701 }
-   0.028800375s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for numpy v0.24.0/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/numpy-0.24.0/build.rs", Edition2021) }
-   0.028803833s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 13430573469598906584, new_name: "build_script_build", new_fingerprint: 1909871373564144475 }
-   0.028882250s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for numpy v0.24.0/Build/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/numpy-0.24.0/build.rs", Edition2021) }
-   0.028887958s  INFO prepare_target{force=false package_id=numpy v0.24.0 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_build_config", old_fingerprint: 7319263819050873930, new_name: "pyo3_build_config", new_fingerprint: 8006730394990096934 }
-   0.029008250s  INFO prepare_target{force=false package_id=pyo3-build-config v0.24.2 target="pyo3_build_config"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-build-config v0.24.2/Build/TargetInner { ..: lib_target("pyo3_build_config", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.24.2/src/lib.rs", Edition2021) }
-   0.029011500s  INFO prepare_target{force=false package_id=pyo3-build-config v0.24.2 target="pyo3_build_config"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 3551690600865589176, new_name: "build_script_build", new_fingerprint: 17428710773594195186 }
-   0.029346292s  INFO prepare_target{force=false package_id=pyo3-build-config v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-build-config v0.24.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.24.2/build.rs", Edition2021) }
-   0.029351750s  INFO prepare_target{force=false package_id=pyo3-build-config v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: EnvVarChanged { name: "VIRTUAL_ENV", old_value: Some("/Volumes/EksternalHome/Koding/Rust/las_rs/.venv"), new_value: None }
-   0.030751750s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="pyo3"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3 v0.24.2/Check { test: false }/TargetInner { ..: lib_target("pyo3", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-0.24.2/src/lib.rs", Edition2021) }
-   0.030755250s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="pyo3"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_macros", old_fingerprint: 14436328533512066817, new_name: "pyo3_macros", new_fingerprint: 13843506448366942242 }
-   0.031941583s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3 v0.24.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-0.24.2/build.rs", Edition2021) }
-   0.031944500s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 5146240367556918563, new_name: "build_script_build", new_fingerprint: 4913930902138330474 }
-   0.032025500s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3 v0.24.2/Build/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-0.24.2/build.rs", Edition2021) }
-   0.032028417s  INFO prepare_target{force=false package_id=pyo3 v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_build_config", old_fingerprint: 7319263819050873930, new_name: "pyo3_build_config", new_fingerprint: 8006730394990096934 }
-   0.032219917s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-ffi v0.24.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-ffi-0.24.2/build.rs", Edition2021) }
-   0.032222708s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 5904194965265621558, new_name: "build_script_build", new_fingerprint: 8758064791310982263 }
-   0.032282417s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-ffi v0.24.2/Build/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-ffi-0.24.2/build.rs", Edition2021) }
-   0.032285042s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_build_config", old_fingerprint: 7319263819050873930, new_name: "pyo3_build_config", new_fingerprint: 8006730394990096934 }
-   0.032388458s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="pyo3_ffi"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-ffi v0.24.2/Check { test: false }/TargetInner { ..: lib_target("pyo3_ffi", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-ffi-0.24.2/src/lib.rs", Edition2021) }
-   0.032391375s  INFO prepare_target{force=false package_id=pyo3-ffi v0.24.2 target="pyo3_ffi"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 3864507667729305807, new_name: "build_script_build", new_fingerprint: 3022310993930484909 }
-   0.032500875s  INFO prepare_target{force=false package_id=pyo3-macros v0.24.2 target="pyo3_macros"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-macros v0.24.2/Build/TargetInner { for_host: true, proc_macro: true, ..: lib_target("pyo3_macros", ["proc-macro"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-macros-0.24.2/src/lib.rs", Edition2021) }
-   0.032504542s  INFO prepare_target{force=false package_id=pyo3-macros v0.24.2 target="pyo3_macros"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_macros_backend", old_fingerprint: 14286468307531041605, new_name: "pyo3_macros_backend", new_fingerprint: 3202859262828897251 }
-   0.033391000s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="pyo3_macros_backend"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-macros-backend v0.24.2/Build/TargetInner { ..: lib_target("pyo3_macros_backend", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-macros-backend-0.24.2/src/lib.rs", Edition2021) }
-   0.033395125s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="pyo3_macros_backend"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 16396716344010518504, new_name: "build_script_build", new_fingerprint: 9908520819332158246 }
-   0.033782583s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-macros-backend v0.24.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-macros-backend-0.24.2/build.rs", Edition2021) }
-   0.033788125s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "build_script_build", old_fingerprint: 17480785128049992130, new_name: "build_script_build", new_fingerprint: 13861772485880304563 }
-   0.033857625s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint dirty for pyo3-macros-backend v0.24.2/Build/TargetInner { ..: custom_build_target("build-script-build", "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-macros-backend-0.24.2/build.rs", Edition2021) }
-   0.033860417s  INFO prepare_target{force=false package_id=pyo3-macros-backend v0.24.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     dirty: UnitDependencyInfoChanged { old_name: "pyo3_build_config", old_fingerprint: 7319263819050873930, new_name: "pyo3_build_config", new_fingerprint: 8006730394990096934 }
-   0.038214542s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: dependency on `numpy` is newer than we are 1775160366.764074938s > 1775160205.116040307s "/Volumes/EksternalHome/Koding/Rust/las_rs"
-   0.038259125s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint dirty for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.038262708s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { name: "numpy", dep_mtime: FileTime { seconds: 1775160366, nanos: 764074938 }, max_mtime: FileTime { seconds: 1775160205, nanos: 116040307 } })
-   Compiling pyo3-build-config v0.24.2
-   Compiling pyo3-macros-backend v0.24.2
-   Compiling pyo3-ffi v0.24.2
-   Compiling pyo3 v0.24.2
-   Compiling numpy v0.24.0
-   Compiling pyo3-macros v0.24.2
+    Blocking waiting for file lock on package cache
+   0.013984208s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: false }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
+   0.013998333s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-89dfd1af44f22201/lib-las_rs`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.016200208s  INFO prepare_target{force=false package_id=numpy v0.28.0 target="numpy"}: cargo::core::compiler::fingerprint: fingerprint error for numpy v0.28.0/Check { test: false }/TargetInner { ..: lib_target("numpy", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/numpy-0.28.0/src/lib.rs", Edition2021) }
+   0.016205250s  INFO prepare_target{force=false package_id=numpy v0.28.0 target="numpy"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/numpy-f6a084fc9adcca93/lib-numpy`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.017206666s  INFO prepare_target{force=false package_id=pyo3 v0.28.3 target="pyo3"}: cargo::core::compiler::fingerprint: fingerprint error for pyo3 v0.28.3/Check { test: false }/TargetInner { ..: lib_target("pyo3", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-0.28.3/src/lib.rs", Edition2021) }
+   0.017210083s  INFO prepare_target{force=false package_id=pyo3 v0.28.3 target="pyo3"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/pyo3-226b18ea1e65f8df/lib-pyo3`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.018921375s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
+   0.018927083s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-cf322550e77a7008/test-lib-las_rs`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: std::backtrace::Backtrace::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+    Checking pyo3 v0.28.3
+    Checking numpy v0.28.0
     Checking las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.39s
+error: could not compile `las_rs` (lib) due to 44 previous errors; 11 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `las_rs` (lib test) due to 44 previous errors; 11 warnings emitted

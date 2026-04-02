@@ -1,0 +1,14 @@
+/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/deps/pyo3_build_config-e3da9757b6f1a528.d: /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/lib.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/errors.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/impl_.rs /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config-file.txt /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config.txt
+
+/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/deps/libpyo3_build_config-e3da9757b6f1a528.rlib: /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/lib.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/errors.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/impl_.rs /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config-file.txt /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config.txt
+
+/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/deps/libpyo3_build_config-e3da9757b6f1a528.rmeta: /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/lib.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/errors.rs /Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/impl_.rs /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config-file.txt /Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config.txt
+
+/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/lib.rs:
+/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/errors.rs:
+/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.25.1/src/impl_.rs:
+/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config-file.txt:
+/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.25.1
+# env-dep:OUT_DIR=/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/build/pyo3-build-config-e6208a0c353e5bde/out

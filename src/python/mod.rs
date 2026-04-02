@@ -18,7 +18,7 @@ fn read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<'_, PyD
 }
 
 #[pyfunction]
-fn read_header_line(py: Python<'_>, line: &str) -> PyResult<Option<PyObject>> {
+fn read_header_line(py: Python<'_>, line: &str) -> PyResult<Option<Py<PyAny>>> {
     match header::parse_header_line(line) {
         Some(parsed) => {
             let dict = PyDict::new(py);

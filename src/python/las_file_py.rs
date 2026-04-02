@@ -120,7 +120,7 @@ impl LASFile {
     }
 
     #[getter]
-    fn sections(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn sections(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let dict = PyDict::new(py);
         dict.set_item("Version", self.version_section.clone().into_pyobject(py)?)?;
         dict.set_item("Well", self.well_section.clone().into_pyobject(py)?)?;
@@ -134,7 +134,7 @@ impl LASFile {
     }
 
     #[getter]
-    fn header(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn header(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         self.sections(py)
     }
 
@@ -175,7 +175,7 @@ impl LASFile {
         // Create 1D array and reshape to 2D — avoids Vec<Vec<f64>> overhead
         let arr = numpy::PyArray1::from_vec(py, flat);
         let reshaped = arr.call_method1("reshape", ((n_rows, n_curves),))?;
-        Ok(reshaped.downcast_into::<PyArray2<f64>>()?)
+        Ok(reshaped.cast_into::<PyArray2<f64>>()?)
     }
 
     #[setter]
@@ -283,7 +283,7 @@ impl LASFile {
         Err(PyKeyError::new_err("must specify mnemonic or ix"))
     }
 
-    fn get_curve(&self, py: Python<'_>, mnemonic: &str) -> PyResult<PyObject> {
+    fn get_curve(&self, py: Python<'_>, mnemonic: &str) -> PyResult<Py<PyAny>> {
         if let Some(idx) = self.curves_section.find_index_by_mnemonic(mnemonic) {
             return Ok(self.curves_section.items[idx].to_py(py));
         }
@@ -322,7 +322,7 @@ impl LASFile {
             .collect()
     }
 
-    fn values(&self, py: Python<'_>) -> PyResult<Vec<PyObject>> {
+    fn values(&self, py: Python<'_>) -> PyResult<Vec<Py<PyAny>>> {
         Ok(self.curves_section.items.iter()
             .map(|item| {
                 if let ItemWrapper::Curve(c) = item {
@@ -334,7 +334,7 @@ impl LASFile {
             .collect())
     }
 
-    fn items(&self, py: Python<'_>) -> PyResult<Vec<(String, PyObject)>> {
+    fn items(&self, py: Python<'_>) -> PyResult<Vec<(String, Py<PyAny>)>> {
         Ok(self.curves_section.items.iter()
             .map(|item| {
                 let name = item.session_mnemonic().to_string();
@@ -388,7 +388,7 @@ impl LASFile {
     }
 
     #[getter]
-    fn curvesdict(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn curvesdict(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let dict = PyDict::new(py);
         for item in &self.curves_section.items {
             dict.set_item(item.session_mnemonic(), item.to_py(py))?;
@@ -517,7 +517,7 @@ impl LASFile {
         Ok(())
     }
 
-    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<PyObject> {
+    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         if let Ok(idx) = key.extract::<isize>() {
             let len = self.curves_section.items.len() as isize;
             let actual = if idx < 0 { len + idx } else { idx };
@@ -590,7 +590,7 @@ impl LASFile {
     // ----- DataFrame -----
 
     #[pyo3(signature = (include_units=false))]
-    fn df(&self, py: Python<'_>, include_units: bool) -> PyResult<PyObject> {
+    fn df(&self, py: Python<'_>, include_units: bool) -> PyResult<Py<PyAny>> {
         let pd = py.import("pandas")?;
         let data_dict = PyDict::new(py);
 
@@ -663,7 +663,7 @@ impl LASFile {
     fn json(&self, py: Python<'_>) -> PyResult<String> {
         // Clone for GIL-free JSON serialization (pure Rust, no Python calls)
         let las_clone = self.clone();
-        Ok(py.allow_threads(move || build_json_string(&las_clone)))
+        Ok(py.detach(move || build_json_string(&las_clone)))
     }
 
     #[setter]
@@ -805,7 +805,7 @@ impl LASFile {
         Ok(PyArray2::from_vec2(py, &rows).unwrap())
     }
 
-    fn __getstate__(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn __getstate__(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         // Pickle: write LAS to string, store as state
         let empty_map = HashMap::new();
         let output = writer::format_las(
@@ -908,7 +908,7 @@ impl LASFile {
         // Parse column_fmt dict
         let mut col_fmt_map: HashMap<usize, String> = HashMap::new();
         if let Some(cf) = column_fmt {
-            if let Ok(dict) = cf.downcast::<PyDict>() {
+            if let Ok(dict) = cf.cast::<PyDict>() {
                 for (k, v) in dict.iter() {
                     if let (Ok(idx), Ok(fmt_str)) = (k.extract::<usize>(), v.extract::<String>()) {
                         col_fmt_map.insert(idx, fmt_str);
@@ -921,7 +921,7 @@ impl LASFile {
         let las_clone = self.clone();
         let fmt_owned = fmt.map(|s| s.to_string());
         let dsh_owned = data_section_header.map(|s| s.to_string());
-        let output = py.allow_threads(move || {
+        let output = py.detach(move || {
             writer::format_las(
                 &las_clone,
                 version, wrap, mnemonics_header,
@@ -990,7 +990,7 @@ impl LASFile {
         // Clone for GIL-free CSV formatting
         let las_clone = self.clone();
         let eff_loc_owned = effective_units_loc.map(|s| s.to_string());
-        let output = py.allow_threads(move || {
+        let output = py.detach(move || {
             writer::format_csv(
                 &las_clone,
                 mnem_list.as_deref(),

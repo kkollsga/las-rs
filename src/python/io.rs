@@ -90,7 +90,7 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
     let (content, detected_encoding) = resolve_source(py, source, encoding.as_deref(), &encoding_errors)?;
 
     // Release the GIL during parsing -- read_las is pure Rust, no Python objects
-    let mut las = py.allow_threads(|| {
+    let mut las = py.detach(|| {
         reader::read_las(&content, ignore_header_errors, mnemonic_case.as_deref(), ignore_data, null_policy, read_policy, &ignore_comments)
     })?;
     las.encoding = detected_encoding;
@@ -129,7 +129,7 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
                     }
                 }
             }
-        } else if let Ok(dict) = dt.downcast::<PyDict>() {
+        } else if let Ok(dict) = dt.cast::<PyDict>() {
             // dtypes={"GR": int} -> set dtype override on specific curves
             for (key, dtype_obj) in dict.iter() {
                 let name: String = key.extract()?;

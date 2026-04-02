@@ -79,7 +79,7 @@ impl HeaderItem {
     }
 
     #[getter]
-    fn get_value(&self, py: Python<'_>) -> PyObject {
+    fn get_value(&self, py: Python<'_>) -> Py<PyAny> {
         self.value.to_py(py)
     }
 
@@ -100,7 +100,7 @@ impl HeaderItem {
     }
 
     #[getter]
-    fn get_data(&self, py: Python<'_>) -> PyObject {
+    fn get_data(&self, py: Python<'_>) -> Py<PyAny> {
         self.data.to_py(py)
     }
 
@@ -115,7 +115,7 @@ impl HeaderItem {
         self.session_mnemonic = name;
     }
 
-    fn __getitem__(&self, py: Python<'_>, key: &str) -> PyResult<PyObject> {
+    fn __getitem__(&self, py: Python<'_>, key: &str) -> PyResult<Py<PyAny>> {
         match key {
             "mnemonic" => Ok(self.session_mnemonic.clone().into_pyobject(py).unwrap().into_any().unbind()),
             "unit" => Ok(self.unit.clone().into_pyobject(py).unwrap().into_any().unbind()),
@@ -203,7 +203,7 @@ impl CurveItem {
                 // Try to extract as numpy array or list of f64
                 if let Ok(arr) = d.extract::<Vec<f64>>() {
                     arr
-                } else if let Ok(arr_ref) = d.downcast::<PyArray1<f64>>() {
+                } else if let Ok(arr_ref) = d.cast::<PyArray1<f64>>() {
                     arr_ref.to_vec()?
                 } else {
                     Vec::new()
@@ -263,7 +263,7 @@ impl CurveItem {
     }
 
     #[getter]
-    fn get_value(&self, py: Python<'_>) -> PyObject {
+    fn get_value(&self, py: Python<'_>) -> Py<PyAny> {
         self.header.value.to_py(py)
     }
 
@@ -285,7 +285,7 @@ impl CurveItem {
 
     #[allow(non_snake_case)]
     #[getter]
-    fn API_code(&self, py: Python<'_>) -> PyObject {
+    fn API_code(&self, py: Python<'_>) -> Py<PyAny> {
         self.header.value.to_py(py)
     }
 
@@ -297,7 +297,7 @@ impl CurveItem {
     }
 
     #[getter]
-    fn data<'py>(&self, py: Python<'py>) -> PyResult<PyObject> {
+    fn data<'py>(&self, py: Python<'py>) -> PyResult<Py<PyAny>> {
         // Return string data if available
         if let Some(ref strings) = self.string_data {
             let np = py.import("numpy")?;
@@ -326,7 +326,7 @@ impl CurveItem {
         if let Ok(arr) = data.extract::<Vec<f64>>() {
             self.curve_data = arr;
             self.string_data = None;
-        } else if let Ok(arr_ref) = data.downcast::<PyArray1<f64>>() {
+        } else if let Ok(arr_ref) = data.cast::<PyArray1<f64>>() {
             self.curve_data = arr_ref.to_vec().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{}", e)))?;
             self.string_data = None;
         } else if let Ok(strings) = data.extract::<Vec<String>>() {
@@ -354,7 +354,7 @@ impl CurveItem {
         PyTuple::new(py, &[args.into_any(), kwargs.into_any()])
     }
 
-    fn __getitem__(&self, py: Python<'_>, key: &str) -> PyResult<PyObject> {
+    fn __getitem__(&self, py: Python<'_>, key: &str) -> PyResult<Py<PyAny>> {
         match key {
             "mnemonic" => Ok(self.header.session_mnemonic.clone().into_pyobject(py).unwrap().into_any().unbind()),
             "unit" => Ok(self.header.unit.clone().into_pyobject(py).unwrap().into_any().unbind()),
@@ -461,7 +461,7 @@ impl SectionItems {
         }
     }
 
-    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<PyObject> {
+    fn __getitem__(&self, py: Python<'_>, key: &Bound<'_, PyAny>) -> PyResult<Py<PyAny>> {
         // Try integer index
         if let Ok(idx) = key.extract::<isize>() {
             let len = self.items.len() as isize;
@@ -473,7 +473,7 @@ impl SectionItems {
         }
 
         // Try slice
-        if let Ok(slice) = key.downcast::<PySlice>() {
+        if let Ok(slice) = key.cast::<PySlice>() {
             let len = self.items.len();
             let indices = slice.indices(len as isize)?;
             let mut new_items = Vec::new();
@@ -575,7 +575,7 @@ impl SectionItems {
         Ok(false)
     }
 
-    fn __iter__(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn __iter__(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let list = PyList::new(py, self.items.iter().map(|item| item.to_py(py)))?;
         Ok(list.call_method0("__iter__")?.unbind())
     }
@@ -614,11 +614,11 @@ impl SectionItems {
         self.items.iter().map(|item| item.session_mnemonic().to_string()).collect()
     }
 
-    fn values(&self, py: Python<'_>) -> PyResult<Vec<PyObject>> {
+    fn values(&self, py: Python<'_>) -> PyResult<Vec<Py<PyAny>>> {
         Ok(self.items.iter().map(|item| item.to_py(py)).collect())
     }
 
-    fn items(&self, py: Python<'_>) -> PyResult<Vec<(String, PyObject)>> {
+    fn items(&self, py: Python<'_>) -> PyResult<Vec<(String, Py<PyAny>)>> {
         Ok(self.items.iter().map(|item| {
             (item.session_mnemonic().to_string(), item.to_py(py))
         }).collect())
@@ -628,16 +628,16 @@ impl SectionItems {
         self.keys()
     }
 
-    fn itervalues(&self, py: Python<'_>) -> PyResult<Vec<PyObject>> {
+    fn itervalues(&self, py: Python<'_>) -> PyResult<Vec<Py<PyAny>>> {
         self.values(py)
     }
 
-    fn iteritems(&self, py: Python<'_>) -> PyResult<Vec<(String, PyObject)>> {
+    fn iteritems(&self, py: Python<'_>) -> PyResult<Vec<(String, Py<PyAny>)>> {
         self.items(py)
     }
 
     #[pyo3(signature = (mnemonic, default=None, add=false))]
-    fn get(&mut self, py: Python<'_>, mnemonic: &str, default: Option<&Bound<'_, PyAny>>, add: bool) -> PyResult<PyObject> {
+    fn get(&mut self, py: Python<'_>, mnemonic: &str, default: Option<&Bound<'_, PyAny>>, add: bool) -> PyResult<Py<PyAny>> {
         if let Some(idx) = self.find_index_by_mnemonic(mnemonic) {
             return Ok(self.items[idx].to_py(py));
         }
@@ -749,7 +749,7 @@ impl SectionItems {
         Ok(Py::new(py, new_item)?.into_any())
     }
 
-    fn dictview(&self, py: Python<'_>) -> PyResult<PyObject> {
+    fn dictview(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let dict = PyDict::new(py);
         for item in &self.items {
             dict.set_item(item.session_mnemonic(), item.value().to_py(py))?;
@@ -777,7 +777,7 @@ impl SectionItems {
         }
     }
 
-    fn __getattr__(&self, py: Python<'_>, name: &str) -> PyResult<PyObject> {
+    fn __getattr__(&self, py: Python<'_>, name: &str) -> PyResult<Py<PyAny>> {
         if let Some(idx) = self.find_index_by_mnemonic(name) {
             return Ok(self.items[idx].to_py(py));
         }

@@ -10,7 +10,7 @@ use crate::core::types::{CurveItem, HeaderItem, ItemWrapper, Value};
 // ---------------------------------------------------------------------------
 
 impl Value {
-    pub fn to_py(&self, py: Python<'_>) -> PyObject {
+    pub fn to_py(&self, py: Python<'_>) -> Py<PyAny> {
         match self {
             Value::Str(s) => s.into_pyobject(py).unwrap().into_any().unbind(),
             Value::Int(i) => i.into_pyobject(py).unwrap().into_any().unbind(),
@@ -46,7 +46,7 @@ impl Value {
 // ---------------------------------------------------------------------------
 
 impl ItemWrapper {
-    pub fn to_py(&self, py: Python<'_>) -> PyObject {
+    pub fn to_py(&self, py: Python<'_>) -> Py<PyAny> {
         match self {
             ItemWrapper::Header(h) => {
                 Py::new(py, h.clone()).unwrap().into_any()
@@ -123,7 +123,7 @@ pub fn extract_curve_data(data: Option<&Bound<'_, PyAny>>) -> PyResult<Vec<f64>>
         Some(d) => {
             if let Ok(arr) = d.extract::<Vec<f64>>() {
                 Ok(arr)
-            } else if let Ok(arr_ref) = d.downcast::<PyArray1<f64>>() {
+            } else if let Ok(arr_ref) = d.cast::<PyArray1<f64>>() {
                 use numpy::PyArrayMethods;
                 arr_ref.to_vec().map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("{}", e)))
             } else {
