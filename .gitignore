@@ -1,0 +1,28 @@
+# Rust
+/target/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.so
+*.egg-info/
+dist/
+*.whl
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Benchmark results (regeneratable)
+benchmarks/results/
+benchmarks/results.csv
+
+# Misc
+*.swp
+*.swo
+*~
