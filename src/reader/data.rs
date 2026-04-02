@@ -40,6 +40,12 @@ pub fn parse_data_section(
     parse_data_inner(lines, n_curves, null_value, delimiter, false, &NullPolicy::Strict, &["#".to_string()])
 }
 
+/// Result of data parsing: float columns + auto-detected string columns
+pub struct ParsedData {
+    pub float_columns: Vec<Vec<f64>>,
+    pub string_columns: std::collections::HashMap<usize, Vec<String>>,
+}
+
 pub fn parse_data_section_with_policy(
     lines: &[&str],
     n_curves: usize,
@@ -49,17 +55,144 @@ pub fn parse_data_section_with_policy(
     null_policy: &NullPolicy,
     read_policy: Option<&str>,
     ignore_comments: &[String],
-) -> Vec<Vec<f64>> {
-    // Apply read policy substitutions to lines
-    if let Some(policy) = read_policy {
-        let transformed: Vec<String> = lines.iter().map(|line| {
-            apply_read_policy(line, policy)
-        }).collect();
-        let transformed_refs: Vec<&str> = transformed.iter().map(|s| s.as_str()).collect();
-        parse_data_inner(&transformed_refs, n_curves, null_value, delimiter, wrapped, null_policy, ignore_comments)
-    } else {
-        parse_data_inner(lines, n_curves, null_value, delimiter, wrapped, null_policy, ignore_comments)
+) -> ParsedData {
+    // For wrapped mode, use the old parse_data_inner (no string auto-detect)
+    if wrapped {
+        let effective_lines: Vec<String>;
+        let final_refs: Vec<&str>;
+        if let Some(policy) = read_policy {
+            effective_lines = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
+            final_refs = effective_lines.iter().map(|s| s.as_str()).collect();
+        } else {
+            effective_lines = Vec::new();
+            final_refs = lines.to_vec();
+        }
+        let float_columns = parse_data_inner(
+            &final_refs, n_curves, null_value, delimiter, true, null_policy, ignore_comments
+        );
+        return ParsedData {
+            float_columns,
+            string_columns: std::collections::HashMap::new(),
+        };
     }
+
+    // Unwrapped mode: use two-pass approach with string auto-detection
+    let effective_lines: Vec<String>;
+    let line_refs: Vec<&str>;
+
+    if let Some(policy) = read_policy {
+        effective_lines = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
+        line_refs = effective_lines.iter().map(|s| s.as_str()).collect();
+    } else {
+        effective_lines = Vec::new();
+        line_refs = lines.to_vec();
+    }
+    let data_lines = &line_refs;
+
+    // Two-pass approach for auto-detecting string columns
+    // Pass 1: Tokenize all rows, check which columns are non-numeric
+    let is_comment = |line: &str| -> bool {
+        let trimmed = line.trim();
+        ignore_comments.iter().any(|prefix| trimmed.starts_with(prefix.as_str()))
+    };
+
+    let mut all_rows: Vec<Vec<String>> = Vec::new();
+    for line in data_lines.iter() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || is_comment(trimmed) { continue; }
+        let cleaned = trimmed.replace('\x1A', "");
+        let cleaned = cleaned.trim();
+        if cleaned.is_empty() { continue; }
+
+        let tokens: Vec<String> = match delimiter {
+            Some(',') => cleaned.split(',').map(|s| s.trim().to_string()).collect(),
+            Some('\t') => cleaned.split('\t').map(|s| s.trim().to_string()).collect(),
+            _ => tokenize_whitespace(cleaned),
+        };
+        all_rows.push(tokens);
+    }
+
+    if all_rows.is_empty() || n_curves == 0 {
+        return ParsedData {
+            float_columns: vec![Vec::new(); n_curves],
+            string_columns: std::collections::HashMap::new(),
+        };
+    }
+
+    // Detect which columns have non-numeric data
+    let max_cols = all_rows.iter().map(|r| r.len()).max().unwrap_or(0);
+    let mut non_numeric_count = vec![0usize; max_cols];
+    let mut total_count = vec![0usize; max_cols];
+
+    for row in &all_rows {
+        for (col, token) in row.iter().enumerate() {
+            if col >= max_cols { break; }
+            total_count[col] += 1;
+            if token.parse::<f64>().is_err() {
+                non_numeric_count[col] += 1;
+            }
+        }
+    }
+
+    // A column is "string" if >50% of its values are non-numeric (skip col 0 = index)
+    let mut string_col_set: std::collections::HashSet<usize> = std::collections::HashSet::new();
+    for col in 1..max_cols {
+        if total_count[col] > 0 && non_numeric_count[col] > total_count[col] / 2 {
+            string_col_set.insert(col);
+        }
+    }
+
+    // Pass 2: Build float and string columns
+    let mut float_columns: Vec<Vec<f64>> = vec![Vec::new(); max_cols.max(n_curves)];
+    let mut string_columns: std::collections::HashMap<usize, Vec<String>> = std::collections::HashMap::new();
+    for &col in &string_col_set {
+        string_columns.insert(col, Vec::new());
+    }
+
+    for row in &all_rows {
+        for col in 0..float_columns.len() {
+            if col < row.len() {
+                if string_col_set.contains(&col) {
+                    string_columns.get_mut(&col).unwrap().push(row[col].clone());
+                    float_columns[col].push(f64::NAN);
+                } else {
+                    float_columns[col].push(row[col].parse::<f64>().unwrap_or(f64::NAN));
+                }
+            } else {
+                float_columns[col].push(f64::NAN);
+            }
+        }
+    }
+
+    // Apply null policy on float columns (skip col 0 and string columns)
+    apply_null_policy(&mut float_columns, null_value, null_policy);
+
+    ParsedData { float_columns, string_columns }
+}
+
+/// Tokenize a whitespace-delimited line, respecting quoted strings
+fn tokenize_whitespace(line: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+
+    for ch in line.chars() {
+        if ch == '"' {
+            in_quotes = !in_quotes;
+            // Don't include the quote chars in the token
+        } else if ch.is_whitespace() && !in_quotes {
+            if !current.is_empty() {
+                tokens.push(current.clone());
+                current.clear();
+            }
+        } else {
+            current.push(ch);
+        }
+    }
+    if !current.is_empty() {
+        tokens.push(current);
+    }
+    tokens
 }
 
 fn apply_read_policy(line: &str, policy: &str) -> String {

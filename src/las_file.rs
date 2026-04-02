@@ -681,8 +681,14 @@ impl LASFile {
                 if i == 0 {
                     continue; // index column, handled separately
                 }
-                let arr = numpy::PyArray1::from_vec(py, c.curve_data.clone());
-                data_dict.set_item(col_name, arr)?;
+                if let Some(ref strings) = c.string_data {
+                    // String column → pandas object dtype
+                    let list = pyo3::types::PyList::new(py, strings.iter().map(|s| s.as_str()))?;
+                    data_dict.set_item(col_name, list)?;
+                } else {
+                    let arr = numpy::PyArray1::from_vec(py, c.curve_data.clone());
+                    data_dict.set_item(col_name, arr)?;
+                }
             }
         }
 
@@ -1609,12 +1615,20 @@ pub fn read_las(
                             }
                         }
                     } else {
-                        let columns = data::parse_data_section_with_policy(
+                        let parsed = data::parse_data_section_with_policy(
                             &data_lines, n_curves, null_value, delimiter,
                             wrapped, &effective_null_policy,
                             read_policy.as_deref(), ignore_comments,
                         );
-                        assign_data_to_curves(&mut las.curves_section, columns, n_curves);
+                        assign_data_to_curves(&mut las.curves_section, parsed.float_columns, n_curves);
+                        // Assign auto-detected string data to curves
+                        for (&col_idx, strings) in &parsed.string_columns {
+                            if col_idx < las.curves_section.items.len() {
+                                if let ItemWrapper::Curve(ref mut c) = las.curves_section.items[col_idx] {
+                                    c.string_data = Some(strings.clone());
+                                }
+                            }
+                        }
                     }
                 }
             }
