@@ -688,11 +688,10 @@ impl LASFile {
                     continue; // index column, handled separately
                 }
                 if let Some(ref strings) = c.string_data {
-                    // String column → numpy object array for pandas compatibility
-                    let np = py.import("numpy")?;
-                    let list = pyo3::types::PyList::new(py, strings.iter().map(|s| s.as_str()))?;
-                    let arr = np.call_method1("array", (list,))?;
-                    data_dict.set_item(col_name, arr)?;
+                    // String column → pandas Series with object dtype
+                    let series = pd.call_method1("Series", (strings.clone(),))?;
+                    let series = series.call_method1("astype", ("object",))?;
+                    data_dict.set_item(col_name, series)?;
                 } else {
                     let arr = numpy::PyArray1::from_vec(py, c.curve_data.clone());
                     data_dict.set_item(col_name, arr)?;

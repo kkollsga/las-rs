@@ -400,7 +400,10 @@ impl CurveItem {
         if let Some(ref strings) = self.string_data {
             let np = py.import("numpy")?;
             let list = PyList::new(py, strings.iter().map(|s| s.as_str()))?;
-            let arr = np.call_method1("array", (list,))?;
+            let kwargs = PyDict::new(py);
+            let builtins = py.import("builtins")?;
+            kwargs.set_item("dtype", builtins.getattr("object")?)?;
+            let arr = np.call_method("array", (list,), Some(&kwargs))?;
             return Ok(arr.unbind());
         }
         // Check for dtype override
