@@ -331,30 +331,32 @@ pub fn format_csv(
         }
     }
 
-    // Data rows
+    // Data rows — write directly to buffer, zero intermediate allocations
+    use std::fmt::Write;
     let n_curves = las.curves_section.items.len();
     if n_curves > 0 {
         let n_rows = match &las.curves_section.items[0] {
             ItemWrapper::Curve(c) => c.curve_data.len(),
             _ => 0,
         };
+        // Pre-allocate for data
+        out.reserve(n_rows * n_curves * 12);
         for row_idx in 0..n_rows {
-            let mut vals = Vec::new();
+            let mut first = true;
             for item in &las.curves_section.items {
                 if let ItemWrapper::Curve(c) = item {
+                    if !first { out.push(','); }
+                    first = false;
                     let v = if row_idx < c.curve_data.len() {
                         c.curve_data[row_idx]
                     } else {
                         f64::NAN
                     };
-                    if v.is_nan() {
-                        vals.push(String::new());
-                    } else {
-                        vals.push(format!("{}", v));
+                    if !v.is_nan() {
+                        write!(out, "{}", v).unwrap();
                     }
                 }
             }
-            out.push_str(&vals.join(","));
             out.push_str(lineterminator);
         }
     }

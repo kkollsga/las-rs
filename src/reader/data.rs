@@ -69,13 +69,13 @@ pub fn parse_data_section_with_policy(
 ) -> ParsedData {
     // For wrapped mode, use the old parse_data_inner (no string auto-detect)
     if wrapped {
-        let effective_lines: Vec<String>;
+        let transformed: Vec<Cow<'_, str>>;
         let final_refs: Vec<&str>;
         if let Some(policy) = read_policy {
-            effective_lines = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
-            final_refs = effective_lines.iter().map(|s| s.as_str()).collect();
+            transformed = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
+            final_refs = transformed.iter().map(|cow| cow.as_ref()).collect();
         } else {
-            effective_lines = Vec::new();
+            transformed = Vec::new();
             final_refs = lines.to_vec();
         }
         let float_columns = parse_data_inner(
@@ -88,14 +88,15 @@ pub fn parse_data_section_with_policy(
     }
 
     // Unwrapped mode: check if string detection is needed
-    let effective_lines: Vec<String>;
+    // Use Cow to avoid allocating when read_policy doesn't change the line
+    let transformed: Vec<Cow<'_, str>>;
     let line_refs: Vec<&str>;
 
     if let Some(policy) = read_policy {
-        effective_lines = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
-        line_refs = effective_lines.iter().map(|s| s.as_str()).collect();
+        transformed = lines.iter().map(|line| apply_read_policy(line, policy)).collect();
+        line_refs = transformed.iter().map(|cow| cow.as_ref()).collect();
     } else {
-        effective_lines = Vec::new();
+        transformed = Vec::new();
         line_refs = lines.to_vec();
     }
     let data_lines = &line_refs;
@@ -244,13 +245,14 @@ fn tokenize_whitespace(line: &str) -> Vec<String> {
     tokens
 }
 
-fn apply_read_policy(line: &str, policy: &str) -> String {
-    let mut result = line.to_string();
-    if policy.contains("comma-decimal") {
-        result = COMMA_DECIMAL_RE.replace_all(&result, "$1.$2").to_string();
+fn apply_read_policy<'a>(line: &'a str, policy: &str) -> Cow<'a, str> {
+    // Only allocate if a substitution actually changes the line
+    let mut result: Cow<'a, str> = Cow::Borrowed(line);
+    if policy.contains("comma-decimal") && COMMA_DECIMAL_RE.is_match(&result) {
+        result = Cow::Owned(COMMA_DECIMAL_RE.replace_all(&result, "$1.$2").to_string());
     }
-    if policy.contains("run-on(-)") {
-        result = RUNON_HYPHEN_RE.replace_all(&result, "$1 -$2").to_string();
+    if policy.contains("run-on(-)") && RUNON_HYPHEN_RE.is_match(&result) {
+        result = Cow::Owned(RUNON_HYPHEN_RE.replace_all(&result, "$1 -$2").to_string());
     }
     result
 }

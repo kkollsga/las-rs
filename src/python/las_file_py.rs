@@ -1012,40 +1012,93 @@ impl LASFile {
 }
 
 // Free function for GIL-free JSON serialization
+/// Build JSON string directly — avoids building intermediate serde_json::Value tree
 fn build_json_string(las: &LASFile) -> String {
-    let mut root = serde_json::Map::new();
+    use std::fmt::Write;
 
-    let mut metadata = serde_json::Map::new();
-    for (name, section) in &[
+    let n_curves = las.curves_section.items.len();
+    let n_rows = las.curves_section.items.first()
+        .and_then(|item| if let ItemWrapper::Curve(c) = item { Some(c.curve_data.len()) } else { None })
+        .unwrap_or(0);
+    let mut out = String::with_capacity(2000 + n_rows * n_curves * 10);
+
+    out.push_str("{\"metadata\":{");
+
+    // Write sections metadata
+    let sections: &[(&str, &SectionItems)] = &[
         ("Version", &las.version_section),
         ("Well", &las.well_section),
         ("Curves", &las.curves_section),
-    ] {
-        let mut items = serde_json::Map::new();
-        for item in &section.items {
-            items.insert(item.original_mnemonic().to_string(), item.to_json_value());
+    ];
+    for (si, (name, section)) in sections.iter().enumerate() {
+        if si > 0 { out.push(','); }
+        write!(out, "\"{}\":{{", name).unwrap();
+        for (i, item) in section.items.iter().enumerate() {
+            if i > 0 { out.push(','); }
+            // Write key
+            write!(out, "\"{}\":", escape_json_str(item.original_mnemonic())).unwrap();
+            // Write value as JSON object
+            write_item_json(&mut out, item);
         }
-        metadata.insert(name.to_string(), serde_json::Value::Object(items));
+        out.push('}');
     }
     if !las.params_section.items.is_empty() {
-        let mut items = serde_json::Map::new();
-        for item in &las.params_section.items {
-            items.insert(item.original_mnemonic().to_string(), item.to_json_value());
+        out.push_str(",\"Parameter\":{");
+        for (i, item) in las.params_section.items.iter().enumerate() {
+            if i > 0 { out.push(','); }
+            write!(out, "\"{}\":", escape_json_str(item.original_mnemonic())).unwrap();
+            write_item_json(&mut out, item);
         }
-        metadata.insert("Parameter".to_string(), serde_json::Value::Object(items));
+        out.push('}');
     }
-    root.insert("metadata".to_string(), serde_json::Value::Object(metadata));
 
-    let mut data_obj = serde_json::Map::new();
+    out.push_str("},\"data\":{");
+
+    // Write curve data directly
+    let mut first_curve = true;
     for item in &las.curves_section.items {
         if let ItemWrapper::Curve(c) = item {
-            let vals: Vec<serde_json::Value> = c.curve_data.iter().map(|v| {
-                if v.is_nan() { serde_json::Value::Null } else { serde_json::json!(*v) }
-            }).collect();
-            data_obj.insert(c.header.original_mnemonic.clone(), serde_json::Value::Array(vals));
+            if !first_curve { out.push(','); }
+            first_curve = false;
+            write!(out, "\"{}\":[", escape_json_str(&c.header.original_mnemonic)).unwrap();
+            for (i, v) in c.curve_data.iter().enumerate() {
+                if i > 0 { out.push(','); }
+                if v.is_nan() {
+                    out.push_str("null");
+                } else {
+                    write!(out, "{}", v).unwrap();
+                }
+            }
+            out.push(']');
         }
     }
-    root.insert("data".to_string(), serde_json::Value::Object(data_obj));
 
-    serde_json::to_string(&serde_json::Value::Object(root)).unwrap()
+    out.push_str("}}");
+    out
+}
+
+fn escape_json_str(s: &str) -> String {
+    // Simple JSON string escaping
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn write_item_json(out: &mut String, item: &ItemWrapper) {
+    use std::fmt::Write;
+    let value_str = item.value().display_str();
+    let unit = item.unit();
+    let descr = item.descr();
+    write!(out, "{{\"mnemonic\":\"{}\",\"unit\":\"{}\",\"value\":",
+        escape_json_str(item.original_mnemonic()),
+        escape_json_str(unit),
+    ).unwrap();
+    // Write value with proper JSON type
+    match item.value() {
+        crate::core::types::Value::Int(i) => write!(out, "{}", i).unwrap(),
+        crate::core::types::Value::Float(f) => {
+            if f.is_nan() { out.push_str("null"); }
+            else { write!(out, "{}", f).unwrap(); }
+        }
+        crate::core::types::Value::Str(s) => write!(out, "\"{}\"", escape_json_str(&s)).unwrap(),
+    }
+    write!(out, ",\"descr\":\"{}\"}}", escape_json_str(descr)).unwrap();
 }
