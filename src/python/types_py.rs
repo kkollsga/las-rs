@@ -283,12 +283,14 @@ impl CurveItem {
         self.header.descr = descr.to_string();
     }
 
+    #[allow(non_snake_case)]
     #[getter]
     fn API_code(&self, py: Python<'_>) -> PyObject {
         self.header.value.to_py(py)
     }
 
     #[setter]
+    #[allow(non_snake_case)]
     fn set_API_code(&mut self, value: &Bound<'_, PyAny>) -> PyResult<()> {
         self.header.value = Value::from_py(value)?;
         Ok(())

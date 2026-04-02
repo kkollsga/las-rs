@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
 use crate::core::las_file::LASFile;
-use crate::core::types::{ItemWrapper, Value};
+use crate::core::types::ItemWrapper;
 use crate::python::conversions::{kwarg_opt_string, kwarg_string};
 use crate::reader;
 use crate::reader::data;

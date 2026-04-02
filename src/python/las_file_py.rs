@@ -1,4 +1,4 @@
-use numpy::{PyArray2, PyArrayMethods};
+use numpy::PyArray2;
 use pyo3::exceptions::{PyIOError, PyIndexError, PyKeyError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

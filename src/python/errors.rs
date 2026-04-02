@@ -1,4 +1,3 @@
-use pyo3::prelude::*;
 use pyo3::create_exception;
 
 create_exception!(las_rs, LASDataError, pyo3::exceptions::PyException);

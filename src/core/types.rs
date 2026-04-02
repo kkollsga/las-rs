@@ -55,7 +55,7 @@ fn format_float(f: f64) -> String {
 // HeaderItem
 // ---------------------------------------------------------------------------
 
-#[pyo3::prelude::pyclass(subclass, module = "las_rs._native")]
+#[cfg_attr(feature = "python", pyo3::prelude::pyclass(subclass, module = "las_rs._native"))]
 #[derive(Debug, Clone)]
 pub struct HeaderItem {
     pub original_mnemonic: String,
@@ -70,7 +70,7 @@ pub struct HeaderItem {
 // CurveItem
 // ---------------------------------------------------------------------------
 
-#[pyo3::prelude::pyclass(module = "las_rs._native")]
+#[cfg_attr(feature = "python", pyo3::prelude::pyclass(module = "las_rs._native"))]
 #[derive(Debug, Clone)]
 pub struct CurveItem {
     pub header: HeaderItem,
@@ -169,7 +169,7 @@ impl ItemWrapper {
 // SectionItems
 // ---------------------------------------------------------------------------
 
-#[pyo3::prelude::pyclass(module = "las_rs._native")]
+#[cfg_attr(feature = "python", pyo3::prelude::pyclass(module = "las_rs._native"))]
 #[derive(Debug, Clone)]
 pub struct SectionItems {
     pub items: Vec<ItemWrapper>,

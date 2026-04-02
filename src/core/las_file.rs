@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::core::types::{HeaderItem, ItemWrapper, SectionItems, Value};
 
-#[pyo3::prelude::pyclass(module = "las_rs._native")]
+#[cfg_attr(feature = "python", pyo3::prelude::pyclass(module = "las_rs._native"))]
 #[derive(Debug, Clone)]
 pub struct LASFile {
     pub version_section: SectionItems,
