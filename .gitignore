@@ -18,9 +18,8 @@ dist/
 # OS
 .DS_Store
 
-# Benchmark results (regeneratable)
-benchmarks/results/
-benchmarks/results.csv
+# Benchmarks
+benchmarks/
 
 # Misc
 *.swp
