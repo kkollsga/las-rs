@@ -1,6 +1,5 @@
-    Blocking waiting for file lock on package cache
-   0.013984208s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: false }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.013998333s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-89dfd1af44f22201/lib-las_rs`
+   0.037738917s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las-rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las-rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las-rs/src/lib.rs", Edition2021) }
+   0.037801167s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las-rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las-rs/target/debug/.fingerprint/las_rs-cf322550e77a7008/test-lib-las_rs`
 
 Caused by:
     No such file or directory (os error 2)
@@ -23,84 +22,5 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.016200208s  INFO prepare_target{force=false package_id=numpy v0.28.0 target="numpy"}: cargo::core::compiler::fingerprint: fingerprint error for numpy v0.28.0/Check { test: false }/TargetInner { ..: lib_target("numpy", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/numpy-0.28.0/src/lib.rs", Edition2021) }
-   0.016205250s  INFO prepare_target{force=false package_id=numpy v0.28.0 target="numpy"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/numpy-f6a084fc9adcca93/lib-numpy`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: std::backtrace::Backtrace::create
-   1: cargo_util::paths::read_bytes
-   2: cargo_util::paths::read
-   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   4: cargo::core::compiler::fingerprint::prepare_target
-   5: cargo::core::compiler::compile
-   6: cargo::core::compiler::compile
-   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   8: cargo::ops::cargo_compile::compile_ws
-   9: cargo::ops::cargo_compile::compile_with_exec
-  10: cargo::ops::cargo_compile::compile
-  11: cargo::commands::check::exec
-  12: <cargo::cli::Exec>::exec
-  13: cargo::main
-  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  15: std::rt::lang_start::<()>::{closure#0}
-  16: std::rt::lang_start_internal
-  17: _main
-   0.017206666s  INFO prepare_target{force=false package_id=pyo3 v0.28.3 target="pyo3"}: cargo::core::compiler::fingerprint: fingerprint error for pyo3 v0.28.3/Check { test: false }/TargetInner { ..: lib_target("pyo3", ["lib"], "/Volumes/EksternalHome/KristianEX/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-0.28.3/src/lib.rs", Edition2021) }
-   0.017210083s  INFO prepare_target{force=false package_id=pyo3 v0.28.3 target="pyo3"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/pyo3-226b18ea1e65f8df/lib-pyo3`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: std::backtrace::Backtrace::create
-   1: cargo_util::paths::read_bytes
-   2: cargo_util::paths::read
-   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   4: cargo::core::compiler::fingerprint::prepare_target
-   5: cargo::core::compiler::compile
-   6: cargo::core::compiler::compile
-   7: cargo::core::compiler::compile
-   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   9: cargo::ops::cargo_compile::compile_ws
-  10: cargo::ops::cargo_compile::compile_with_exec
-  11: cargo::ops::cargo_compile::compile
-  12: cargo::commands::check::exec
-  13: <cargo::cli::Exec>::exec
-  14: cargo::main
-  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  16: std::rt::lang_start::<()>::{closure#0}
-  17: std::rt::lang_start_internal
-  18: _main
-   0.018921375s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.018927083s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-cf322550e77a7008/test-lib-las_rs`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: std::backtrace::Backtrace::create
-   1: cargo_util::paths::read_bytes
-   2: cargo_util::paths::read
-   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   4: cargo::core::compiler::fingerprint::prepare_target
-   5: cargo::core::compiler::compile
-   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   7: cargo::ops::cargo_compile::compile_ws
-   8: cargo::ops::cargo_compile::compile_with_exec
-   9: cargo::ops::cargo_compile::compile
-  10: cargo::commands::check::exec
-  11: <cargo::cli::Exec>::exec
-  12: cargo::main
-  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  14: std::rt::lang_start::<()>::{closure#0}
-  15: std::rt::lang_start_internal
-  16: _main
-    Checking pyo3 v0.28.3
-    Checking numpy v0.28.0
-    Checking las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)
-error: could not compile `las_rs` (lib) due to 44 previous errors; 11 warnings emitted
-warning: build failed, waiting for other jobs to finish...
-error: could not compile `las_rs` (lib test) due to 44 previous errors; 11 warnings emitted
+    Checking las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las-rs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.00s
