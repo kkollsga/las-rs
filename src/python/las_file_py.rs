@@ -660,71 +660,10 @@ impl LASFile {
     // ----- JSON -----
 
     #[getter]
-    fn json(&self) -> PyResult<String> {
-        let mut root = serde_json::Map::new();
-
-        // Metadata
-        let mut metadata = serde_json::Map::new();
-        // Version
-        let mut version_items = serde_json::Map::new();
-        for item in &self.version_section.items {
-            version_items.insert(
-                item.original_mnemonic().to_string(),
-                item.to_json_value(),
-            );
-        }
-        metadata.insert("Version".to_string(), serde_json::Value::Object(version_items));
-        // Well
-        let mut well_items = serde_json::Map::new();
-        for item in &self.well_section.items {
-            well_items.insert(
-                item.original_mnemonic().to_string(),
-                item.to_json_value(),
-            );
-        }
-        metadata.insert("Well".to_string(), serde_json::Value::Object(well_items));
-        // Curves
-        let mut curve_items = serde_json::Map::new();
-        for item in &self.curves_section.items {
-            curve_items.insert(
-                item.original_mnemonic().to_string(),
-                item.to_json_value(),
-            );
-        }
-        metadata.insert("Curves".to_string(), serde_json::Value::Object(curve_items));
-        // Params
-        if !self.params_section.items.is_empty() {
-            let mut param_items = serde_json::Map::new();
-            for item in &self.params_section.items {
-                param_items.insert(
-                    item.original_mnemonic().to_string(),
-                    item.to_json_value(),
-                );
-            }
-            metadata.insert("Parameter".to_string(), serde_json::Value::Object(param_items));
-        }
-        root.insert("metadata".to_string(), serde_json::Value::Object(metadata));
-
-        // Data
-        let mut data_obj = serde_json::Map::new();
-        for item in &self.curves_section.items {
-            if let ItemWrapper::Curve(c) = item {
-                let vals: Vec<serde_json::Value> = c.curve_data.iter().map(|v| {
-                    if v.is_nan() {
-                        serde_json::Value::Null
-                    } else {
-                        serde_json::json!(*v)
-                    }
-                }).collect();
-                data_obj.insert(
-                    c.header.original_mnemonic.clone(),
-                    serde_json::Value::Array(vals),
-                );
-            }
-        }
-        root.insert("data".to_string(), serde_json::Value::Object(data_obj));
-
-        Ok(serde_json::to_string(&serde_json::Value::Object(root)).unwrap())
+    fn json(&self, py: Python<'_>) -> PyResult<String> {
+        // Clone for GIL-free JSON serialization (pure Rust, no Python calls)
+        let las_clone = self.clone();
+        Ok(py.allow_threads(move || build_json_string(&las_clone)))
     }
 
     #[setter]
@@ -978,12 +917,19 @@ impl LASFile {
             }
         }
 
-        let output = writer::format_las(
-            self,
-            version, wrap, mnemonics_header, fmt, data_section_header,
-            &lhs_spacer, &spacer, len_numeric_field, &col_fmt_map,
-            step_override, strt_override, stop_override,
-        )?;
+        // Clone data for GIL-free formatting (format_las is pure Rust)
+        let las_clone = self.clone();
+        let fmt_owned = fmt.map(|s| s.to_string());
+        let dsh_owned = data_section_header.map(|s| s.to_string());
+        let output = py.allow_threads(move || {
+            writer::format_las(
+                &las_clone,
+                version, wrap, mnemonics_header,
+                fmt_owned.as_deref(), dsh_owned.as_deref(),
+                &lhs_spacer, &spacer, len_numeric_field, &col_fmt_map,
+                step_override, strt_override, stop_override,
+            )
+        })?;
 
         if let Ok(path) = target.extract::<String>() {
             std::fs::write(&path, &output)
@@ -1041,14 +987,19 @@ impl LASFile {
             units_loc
         };
 
-        let output = writer::format_csv(
-            self,
-            mnem_list.as_deref(),
-            unit_list.as_deref(),
-            effective_units_loc,
-            &lineterminator,
-            no_units,
-        )?;
+        // Clone for GIL-free CSV formatting
+        let las_clone = self.clone();
+        let eff_loc_owned = effective_units_loc.map(|s| s.to_string());
+        let output = py.allow_threads(move || {
+            writer::format_csv(
+                &las_clone,
+                mnem_list.as_deref(),
+                unit_list.as_deref(),
+                eff_loc_owned.as_deref(),
+                &lineterminator,
+                no_units,
+            )
+        })?;
 
         if let Ok(path) = target.extract::<String>() {
             std::fs::write(&path, &output)
@@ -1058,4 +1009,43 @@ impl LASFile {
         }
         Ok(())
     }
+}
+
+// Free function for GIL-free JSON serialization
+fn build_json_string(las: &LASFile) -> String {
+    let mut root = serde_json::Map::new();
+
+    let mut metadata = serde_json::Map::new();
+    for (name, section) in &[
+        ("Version", &las.version_section),
+        ("Well", &las.well_section),
+        ("Curves", &las.curves_section),
+    ] {
+        let mut items = serde_json::Map::new();
+        for item in &section.items {
+            items.insert(item.original_mnemonic().to_string(), item.to_json_value());
+        }
+        metadata.insert(name.to_string(), serde_json::Value::Object(items));
+    }
+    if !las.params_section.items.is_empty() {
+        let mut items = serde_json::Map::new();
+        for item in &las.params_section.items {
+            items.insert(item.original_mnemonic().to_string(), item.to_json_value());
+        }
+        metadata.insert("Parameter".to_string(), serde_json::Value::Object(items));
+    }
+    root.insert("metadata".to_string(), serde_json::Value::Object(metadata));
+
+    let mut data_obj = serde_json::Map::new();
+    for item in &las.curves_section.items {
+        if let ItemWrapper::Curve(c) = item {
+            let vals: Vec<serde_json::Value> = c.curve_data.iter().map(|v| {
+                if v.is_nan() { serde_json::Value::Null } else { serde_json::json!(*v) }
+            }).collect();
+            data_obj.insert(c.header.original_mnemonic.clone(), serde_json::Value::Array(vals));
+        }
+    }
+    root.insert("data".to_string(), serde_json::Value::Object(data_obj));
+
+    serde_json::to_string(&serde_json::Value::Object(root)).unwrap()
 }
