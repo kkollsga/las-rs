@@ -36,7 +36,7 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
                 return data::NullPolicy::from_str_or_list(&s);
             }
             // Try as mixed list (strings + numbers)
-            if let Ok(seq) = v.iter() {
+            if let Ok(seq) = v.try_iter() {
                 let mut floats = Vec::new();
                 let mut strings = Vec::new();
                 for item in seq {

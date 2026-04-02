@@ -914,7 +914,7 @@ impl LASFile {
         let stop = STOP.unwrap_or(*index_data.last().unwrap());
         let step = STEP.unwrap_or_else(|| {
             if index_data.len() > 1 {
-                (index_data[1] - index_data[0])
+                index_data[1] - index_data[0]
             } else {
                 0.0
             }
