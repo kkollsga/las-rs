@@ -45,26 +45,37 @@ pub fn parse_header_line(line: &str) -> Option<ParsedHeaderLine> {
     // Try primary regex (has colon and space between unit-group and value)
     if let Some(caps) = HEADER_RE.captures(trimmed) {
         let mnemonic = caps.get(1).map_or("", |m| m.as_str()).trim().to_string();
-        let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
-        let value = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
-        let descr = caps.get(4).map_or("", |m| m.as_str()).trim().to_string();
-        return Some(ParsedHeaderLine { mnemonic, unit, value, descr });
+        // Validate: if mnemonic contains ':', the dot was likely a decimal point, not a separator
+        if !mnemonic.contains(':') {
+            let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
+            let value = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
+            let descr = caps.get(4).map_or("", |m| m.as_str()).trim().to_string();
+            return Some(ParsedHeaderLine { mnemonic, unit, value, descr });
+        }
+        // Fall through to no-period handling
+        return parse_no_period_line(trimmed);
     }
 
     // Try compact format: MNEM.UNIT:DESCR (colon right after unit, no space for value)
     if let Some(caps) = HEADER_COMPACT_RE.captures(trimmed) {
         let mnemonic = caps.get(1).map_or("", |m| m.as_str()).trim().to_string();
-        let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
-        let descr = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
-        return Some(ParsedHeaderLine { mnemonic, unit, value: String::new(), descr });
+        if !mnemonic.contains(':') {
+            let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
+            let descr = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
+            return Some(ParsedHeaderLine { mnemonic, unit, value: String::new(), descr });
+        }
+        return parse_no_period_line(trimmed);
     }
 
     // Try fallback (no colon)
     if let Some(caps) = NO_COLON_RE.captures(trimmed) {
         let mnemonic = caps.get(1).map_or("", |m| m.as_str()).trim().to_string();
-        let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
-        let value = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
-        return Some(ParsedHeaderLine { mnemonic, unit, value, descr: String::new() });
+        if !mnemonic.contains(':') {
+            let unit = strip_brackets(caps.get(2).map_or("", |m| m.as_str()).trim());
+            let value = caps.get(3).map_or("", |m| m.as_str()).trim().to_string();
+            return Some(ParsedHeaderLine { mnemonic, unit, value, descr: String::new() });
+        }
+        return parse_no_period_line(trimmed);
     }
 
     None
