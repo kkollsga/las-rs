@@ -1181,33 +1181,46 @@ impl LASFile {
             }
         }
 
-        // ~Well — apply STRT/STOP/STEP overrides and auto-recalculate
+        // ~Well — apply STRT/STOP/STEP overrides and auto-sync units from index curve
         out.push_str("~Well ------------------------------------------------------\n");
-        // Get actual depth range for STOP recalculation
-        let actual_stop = self.curves_section.items.first().and_then(|item| {
-            if let ItemWrapper::Curve(c) = item {
-                c.curve_data.last().copied()
-            } else { None }
-        });
+        // Get actual depth range and unit from index curve
+        let (actual_stop, index_unit) = self.curves_section.items.first()
+            .map(|item| {
+                if let ItemWrapper::Curve(c) = item {
+                    (c.curve_data.last().copied(), c.header.unit.clone())
+                } else { (None, String::new()) }
+            })
+            .unwrap_or((None, String::new()));
         for item in &self.well_section.items {
             let mnem_upper = item.original_mnemonic().to_uppercase();
+            // For STRT/STOP/STEP: use index curve's unit if available
+            let effective_unit = if matches!(mnem_upper.as_str(), "STRT" | "STOP" | "STEP") && !index_unit.is_empty() {
+                &index_unit
+            } else {
+                item.unit()
+            };
             if mnem_upper == "STRT" && strt_override.is_some() {
                 out.push_str(&format!(" {}.{}  {} : {}\n",
-                    item.original_mnemonic(), item.unit(),
+                    item.original_mnemonic(), effective_unit,
                     format!("{:.5}", strt_override.unwrap()), item.descr()));
             } else if mnem_upper == "STOP" {
                 let stop_val = stop_override.or(actual_stop);
                 if let Some(sv) = stop_val {
                     out.push_str(&format!(" {}.{}  {} : {}\n",
-                        item.original_mnemonic(), item.unit(),
+                        item.original_mnemonic(), effective_unit,
                         format!("{:.5}", sv), item.descr()));
                 } else {
                     write_header_item(&mut out, item);
                 }
             } else if mnem_upper == "STEP" && step_override.is_some() {
                 out.push_str(&format!(" {}.{}  {} : {}\n",
-                    item.original_mnemonic(), item.unit(),
+                    item.original_mnemonic(), effective_unit,
                     format!("{:.5}", step_override.unwrap()), item.descr()));
+            } else if matches!(mnem_upper.as_str(), "STRT" | "STOP" | "STEP") {
+                // Auto-sync unit from index curve
+                out.push_str(&format!(" {}.{}  {} : {}\n",
+                    item.original_mnemonic(), effective_unit,
+                    item.value().display_str(), item.descr()));
             } else {
                 write_header_item(&mut out, item);
             }

@@ -847,7 +847,20 @@ impl SectionItems {
     }
 
     fn append(&mut self, item: &Bound<'_, PyAny>) -> PyResult<()> {
-        let wrapper = ItemWrapper::from_py(item)?;
+        let mut wrapper = ItemWrapper::from_py(item)?;
+        // Auto-rename empty mnemonics to "UNKNOWN"
+        if wrapper.original_mnemonic().is_empty() {
+            match &mut wrapper {
+                ItemWrapper::Header(h) => {
+                    h.original_mnemonic = "UNKNOWN".to_string();
+                    h.session_mnemonic = "UNKNOWN".to_string();
+                }
+                ItemWrapper::Curve(c) => {
+                    c.header.original_mnemonic = "UNKNOWN".to_string();
+                    c.header.session_mnemonic = "UNKNOWN".to_string();
+                }
+            }
+        }
         let mnemonic = wrapper.original_mnemonic().to_string();
         self.items.push(wrapper);
         self.assign_duplicate_suffixes_for(&mnemonic);
