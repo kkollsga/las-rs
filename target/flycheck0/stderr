@@ -1,50 +1,12 @@
-   0.015514416s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: false }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.015529583s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-0f23689bdfeeeb9b/lib-las_rs`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: std::backtrace::Backtrace::create
-   1: cargo_util::paths::read_bytes
-   2: cargo_util::paths::read
-   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   4: cargo::core::compiler::fingerprint::prepare_target
-   5: cargo::core::compiler::compile
-   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   7: cargo::ops::cargo_compile::compile_ws
-   8: cargo::ops::cargo_compile::compile_with_exec
-   9: cargo::ops::cargo_compile::compile
-  10: cargo::commands::check::exec
-  11: <cargo::cli::Exec>::exec
-  12: cargo::main
-  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  14: std::rt::lang_start::<()>::{closure#0}
-  15: std::rt::lang_start_internal
-  16: _main
-   0.020298375s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint error for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
-   0.020303583s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     err: failed to read `/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-792a528d68e9f015/test-lib-las_rs`
-
-Caused by:
-    No such file or directory (os error 2)
-
-Stack backtrace:
-   0: std::backtrace::Backtrace::create
-   1: cargo_util::paths::read_bytes
-   2: cargo_util::paths::read
-   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
-   4: cargo::core::compiler::fingerprint::prepare_target
-   5: cargo::core::compiler::compile
-   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   7: cargo::ops::cargo_compile::compile_ws
-   8: cargo::ops::cargo_compile::compile_with_exec
-   9: cargo::ops::cargo_compile::compile
-  10: cargo::commands::check::exec
-  11: <cargo::cli::Exec>::exec
-  12: cargo::main
-  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  14: std::rt::lang_start::<()>::{closure#0}
-  15: std::rt::lang_start_internal
-  16: _main
+   0.015719875s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: stale: missing "/Volumes/EksternalHome/Koding/Rust/las_rs/src/las_file.rs"
+   0.015800875s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint dirty for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: false }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
+   0.015810291s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(MissingFile { path: "/Volumes/EksternalHome/Koding/Rust/las_rs/src/las_file.rs" }))
+   0.018508750s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: stale: changed "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs"
+   0.018510958s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:           (vs) "/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-792a528d68e9f015/dep-test-lib-las_rs"
+   0.018512333s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1775158008, nanos: 880606174 } < FileTime { seconds: 1775158723, nanos: 117927746 }
+   0.018548583s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint: fingerprint dirty for las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)/Check { test: true }/TargetInner { ..: lib_target("las_rs", ["cdylib", "rlib"], "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", Edition2021) }
+   0.018552166s  INFO prepare_target{force=false package_id=las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs) target="las_rs"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Volumes/EksternalHome/Koding/Rust/las_rs/target/debug/.fingerprint/las_rs-792a528d68e9f015/dep-test-lib-las_rs", reference_mtime: FileTime { seconds: 1775158008, nanos: 880606174 }, stale: "/Volumes/EksternalHome/Koding/Rust/las_rs/src/lib.rs", stale_mtime: FileTime { seconds: 1775158723, nanos: 117927746 } }))
     Checking las_rs v0.1.0 (/Volumes/EksternalHome/Koding/Rust/las_rs)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.58s
+error: could not compile `las_rs` (lib test) due to 332 previous errors; 24 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `las_rs` (lib) due to 332 previous errors; 24 warnings emitted
