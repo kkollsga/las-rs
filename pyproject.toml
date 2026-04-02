@@ -6,7 +6,26 @@ build-backend = "maturin"
 name = "las-rs"
 dynamic = ["version"]
 requires-python = ">=3.10"
+description = "High-performance LAS file parser and writer for Python, written in Rust"
+readme = "README.md"
+license = "MIT"
+keywords = ["las", "well-log", "geoscience", "petroleum", "parsing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
 dependencies = ["numpy"]
+
+[project.urls]
+Repository = "https://github.com/kkollsga/las-rs"
 
 [project.optional-dependencies]
 dev = ["pytest", "pandas"]
