@@ -1,4 +1,4 @@
-use numpy::{PyArray1, PyArray2, PyArrayMethods};
+use numpy::{PyArray2, PyArrayMethods};
 use pyo3::exceptions::{PyIOError, PyIndexError, PyKeyError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -70,7 +70,7 @@ impl LASFile {
     }
 
     #[getter]
-    fn version(&self, py: Python<'_>) -> PyResult<SectionItems> {
+    fn version(&self, _py: Python<'_>) -> PyResult<SectionItems> {
         Ok(self.version_section.clone())
     }
 
@@ -198,7 +198,7 @@ impl LASFile {
     #[pyo3(signature = (mnemonic, data=None, unit="", descr="", value=None))]
     fn append_curve(
         &mut self,
-        py: Python<'_>,
+        _py: Python<'_>,
         mnemonic: &str,
         data: Option<&Bound<'_, PyAny>>,
         unit: &str,
@@ -232,7 +232,7 @@ impl LASFile {
     #[pyo3(signature = (ix, mnemonic, data=None, unit="", descr="", value=None))]
     fn insert_curve(
         &mut self,
-        py: Python<'_>,
+        _py: Python<'_>,
         ix: usize,
         mnemonic: &str,
         data: Option<&Bound<'_, PyAny>>,

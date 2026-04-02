@@ -4,7 +4,6 @@ use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PySlice, PyTuple};
 
 use crate::core::types::{CurveItem, HeaderItem, ItemWrapper, SectionItems, Value};
-use crate::python::conversions::extract_curve_data;
 
 // ---------------------------------------------------------------------------
 // HeaderItem
@@ -152,7 +151,7 @@ impl HeaderItem {
         PyTuple::new(py, &[args.into_any(), kwargs.into_any()])
     }
 
-    fn __eq__(&self, py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+    fn __eq__(&self, _py: Python<'_>, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(o) = other.extract::<HeaderItem>() {
             Ok(self.original_mnemonic == o.original_mnemonic
                 && self.unit == o.unit

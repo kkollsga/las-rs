@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::core::types::{HeaderItem, CurveItem, ItemWrapper, SectionItems, Value};
+use crate::core::types::{HeaderItem, ItemWrapper, SectionItems, Value};
 
 #[pyo3::prelude::pyclass(module = "las_rs._native")]
 #[derive(Debug, Clone)]
