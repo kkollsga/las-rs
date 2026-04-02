@@ -3,9 +3,20 @@
 
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::borrow::Cow;
 
 static COMMA_DECIMAL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d),(\d)").unwrap());
 static RUNON_HYPHEN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d)-(\d)").unwrap());
+
+/// Strip Ctrl-Z (EOF marker) without allocating if not present.
+#[inline]
+fn strip_ctrl_z(s: &str) -> Cow<'_, str> {
+    if memchr::memchr(0x1A, s.as_bytes()).is_some() {
+        Cow::Owned(s.replace('\x1A', ""))
+    } else {
+        Cow::Borrowed(s)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum NullPolicy {
@@ -76,7 +87,7 @@ pub fn parse_data_section_with_policy(
         };
     }
 
-    // Unwrapped mode: use two-pass approach with string auto-detection
+    // Unwrapped mode: check if string detection is needed
     let effective_lines: Vec<String>;
     let line_refs: Vec<&str>;
 
@@ -89,18 +100,56 @@ pub fn parse_data_section_with_policy(
     }
     let data_lines = &line_refs;
 
-    // Two-pass approach for auto-detecting string columns
-    // Pass 1: Tokenize all rows, check which columns are non-numeric
     let is_comment = |line: &str| -> bool {
         let trimmed = line.trim();
         ignore_comments.iter().any(|prefix| trimmed.starts_with(prefix.as_str()))
     };
 
+    // Fast path: sample first 20 data lines to check for non-numeric tokens.
+    // If all tokens parse as f64, skip string detection entirely (90%+ of files).
+    let sample_size = 20;
+    let mut has_non_numeric = false;
+    let mut sampled = 0;
+    for line in data_lines.iter() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || is_comment(trimmed) { continue; }
+        let cleaned = strip_ctrl_z(trimmed);
+        let cleaned = cleaned.trim();
+        if cleaned.is_empty() { continue; }
+        let tokens: Vec<&str> = match delimiter {
+            Some(',') => cleaned.split(',').map(|s| s.trim()).collect(),
+            Some('\t') => cleaned.split('\t').map(|s| s.trim()).collect(),
+            _ => cleaned.split_whitespace().collect(),
+        };
+        for (i, tok) in tokens.iter().enumerate() {
+            if i > 0 && tok.parse::<f64>().is_err() && !tok.is_empty() {
+                has_non_numeric = true;
+                break;
+            }
+        }
+        if has_non_numeric { break; }
+        sampled += 1;
+        if sampled >= sample_size { break; }
+    }
+
+    // Fast path: all-numeric file → use single-pass parse_data_inner (no allocations)
+    if !has_non_numeric {
+        let float_columns = parse_data_inner(
+            data_lines, n_curves, null_value, delimiter, false, null_policy, ignore_comments
+        );
+        return ParsedData {
+            float_columns,
+            string_columns: std::collections::HashMap::new(),
+        };
+    }
+
+    // Slow path: string detection needed — two-pass approach
+
     let mut all_rows: Vec<Vec<String>> = Vec::new();
     for line in data_lines.iter() {
         let trimmed = line.trim();
         if trimmed.is_empty() || is_comment(trimmed) { continue; }
-        let cleaned = trimmed.replace('\x1A', "");
+        let cleaned = strip_ctrl_z(trimmed);
         let cleaned = cleaned.trim();
         if cleaned.is_empty() { continue; }
 
@@ -233,7 +282,7 @@ fn parse_data_inner(
             if trimmed.is_empty() || is_comment(trimmed) {
                 continue;
             }
-            let cleaned = trimmed.replace('\x1A', "");
+            let cleaned = strip_ctrl_z(trimmed);
             let cleaned = cleaned.trim();
             if cleaned.is_empty() {
                 continue;
@@ -285,7 +334,7 @@ fn parse_data_inner(
             if trimmed.is_empty() || is_comment(trimmed) {
                 continue;
             }
-            let cleaned = trimmed.replace('\x1A', "");
+            let cleaned = strip_ctrl_z(trimmed);
             let cleaned = cleaned.trim();
             if cleaned.is_empty() {
                 continue;
@@ -428,7 +477,7 @@ pub fn parse_data_section_with_strings(
         if trimmed.is_empty() || trimmed.starts_with('#') {
             continue;
         }
-        let cleaned = trimmed.replace('\x1A', "");
+        let cleaned = strip_ctrl_z(trimmed);
         let cleaned = cleaned.trim();
         if cleaned.is_empty() {
             continue;

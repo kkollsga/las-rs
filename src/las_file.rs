@@ -1272,65 +1272,81 @@ impl LASFile {
 
             let should_wrap = wrap_override.unwrap_or(false);
 
+            use std::fmt::Write;
+
+            // Pre-compute per-column precision
+            let col_precs: Vec<usize> = (0..n_curves)
+                .map(|i| column_fmt.get(&i).map(|cf| parse_fmt_precision(cf)).unwrap_or(precision))
+                .collect();
+
             for row_idx in 0..n_rows {
-                let mut vals = Vec::new();
-                for (col_idx, item) in self.curves_section.items.iter().enumerate() {
-                    if let ItemWrapper::Curve(c) = item {
-                        let v = if row_idx < c.curve_data.len() {
-                            c.curve_data[row_idx]
-                        } else {
-                            f64::NAN
-                        };
-
-                        // Determine precision for this column
-                        let col_prec = if let Some(cf) = column_fmt.get(&col_idx) {
-                            parse_fmt_precision(cf)
-                        } else {
-                            precision
-                        };
-
-                        let formatted = if v.is_nan() {
-                            format!("{:.prec$}", null_value, prec = col_prec)
-                        } else {
-                            format!("{:.prec$}", v, prec = col_prec)
-                        };
-
-                        // Apply len_numeric_field padding
-                        let padded = match len_numeric_field {
-                            Some(w) if w > 0 => format!("{:>width$}", formatted, width = w as usize),
-                            Some(-1) => formatted, // No padding
-                            _ => formatted,
-                        };
-
-                        vals.push(padded);
-                    }
-                }
-
                 if should_wrap {
-                    // Wrapped mode: depth on its own line, then remaining values
+                    // Wrapped mode — still uses vec approach for line-width tracking
+                    let mut vals = Vec::with_capacity(n_curves);
+                    for (col_idx, item) in self.curves_section.items.iter().enumerate() {
+                        if let ItemWrapper::Curve(c) = item {
+                            let v = if row_idx < c.curve_data.len() { c.curve_data[row_idx] } else { f64::NAN };
+                            let prec = col_precs[col_idx.min(col_precs.len() - 1)];
+                            let mut s = String::new();
+                            if v.is_nan() {
+                                write!(s, "{:.prec$}", null_value, prec = prec).unwrap();
+                            } else {
+                                write!(s, "{:.prec$}", v, prec = prec).unwrap();
+                            }
+                            vals.push(s);
+                        }
+                    }
                     if !vals.is_empty() {
-                        out.push_str(&format!(" {}\n", vals[0]));
-                        let remaining: Vec<&str> = vals[1..].iter().map(|s| s.as_str()).collect();
-                        // Write remaining values, wrapping at ~80 chars
-                        let mut line = String::from(" ");
-                        for (i, val) in remaining.iter().enumerate() {
-                            if line.len() + val.len() + 1 > 79 && i > 0 {
-                                out.push_str(&line);
+                        write!(out, " {}\n", vals[0]).unwrap();
+                        let mut line_len = 1usize;
+                        out.push(' ');
+                        for (i, val) in vals[1..].iter().enumerate() {
+                            if line_len + val.len() + 2 > 79 && i > 0 {
                                 out.push('\n');
-                                line = String::from(" ");
+                                out.push(' ');
+                                line_len = 1;
                             }
-                            line.push_str(val);
-                            if i < remaining.len() - 1 {
-                                line.push_str("  ");
+                            out.push_str(val);
+                            line_len += val.len();
+                            if i < vals.len() - 2 {
+                                out.push_str("  ");
+                                line_len += 2;
                             }
                         }
-                        if line.trim().len() > 0 {
-                            out.push_str(&line);
-                            out.push('\n');
-                        }
+                        out.push('\n');
                     }
                 } else {
-                    out.push_str(&format!("{}{}\n", lhs_spacer, vals.join(spacer)));
+                    // Unwrapped mode — write directly to buffer, zero intermediate allocations
+                    out.push_str(lhs_spacer);
+                    let mut first = true;
+                    for (col_idx, item) in self.curves_section.items.iter().enumerate() {
+                        if let ItemWrapper::Curve(c) = item {
+                            if !first { out.push_str(spacer); }
+                            first = false;
+                            let v = if row_idx < c.curve_data.len() { c.curve_data[row_idx] } else { f64::NAN };
+                            let prec = col_precs[col_idx.min(col_precs.len() - 1)];
+                            match len_numeric_field {
+                                Some(w) if w > 0 => {
+                                    // Padded: need intermediate string for width
+                                    let mut tmp = String::new();
+                                    if v.is_nan() {
+                                        write!(tmp, "{:.prec$}", null_value, prec = prec).unwrap();
+                                    } else {
+                                        write!(tmp, "{:.prec$}", v, prec = prec).unwrap();
+                                    }
+                                    write!(out, "{:>width$}", tmp, width = w as usize).unwrap();
+                                }
+                                _ => {
+                                    if v.is_nan() {
+                                        write!(out, "{:.prec$}", null_value, prec = prec).unwrap();
+                                    } else {
+                                        write!(out, "{:.prec$}", v, prec = prec).unwrap();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    out.push('\n');
                 }
             }
         }
@@ -1806,23 +1822,22 @@ fn parse_curve_section(
     Ok(string_col_indices)
 }
 
-fn assign_data_to_curves(curves_section: &mut SectionItems, columns: Vec<Vec<f64>>, n_declared: usize) {
+fn assign_data_to_curves(curves_section: &mut SectionItems, mut columns: Vec<Vec<f64>>, n_declared: usize) {
     let n_data_cols = columns.len();
     let n_rows = if columns.is_empty() { 0 } else { columns[0].len() };
 
-    // Assign data to declared curves
+    // Assign data to declared curves — move ownership, no clone
     for (i, item) in curves_section.items.iter_mut().enumerate() {
         if let ItemWrapper::Curve(ref mut c) = item {
             if i < n_data_cols {
-                c.curve_data = columns[i].clone();
+                c.curve_data = std::mem::take(&mut columns[i]);
             } else {
-                // Sparse curve: fill with NaN
                 c.curve_data = vec![f64::NAN; n_rows];
             }
         }
     }
 
-    // Handle excess data columns (more data than declared curves)
+    // Handle excess data columns
     if n_data_cols > n_declared {
         for col_idx in n_declared..n_data_cols {
             let mnemonic = format!("UNKNOWN_{}", col_idx - n_declared + 1);
@@ -1835,7 +1850,7 @@ fn assign_data_to_curves(curves_section: &mut SectionItems, columns: Vec<Vec<f64
                     descr: format!("Auto-generated from excess data column {}", col_idx),
                     data: Value::Str(String::new()),
                 },
-                curve_data: columns[col_idx].clone(),
+                curve_data: std::mem::take(&mut columns[col_idx]),
                 string_data: None,
                 dtype_override: None,
             };
@@ -1991,7 +2006,11 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
     let encoding_errors = kwarg_string(kwargs, "encoding_errors", "replace");
 
     let (content, detected_encoding) = resolve_source(py, source, encoding.as_deref(), &encoding_errors)?;
-    let mut las = read_las(&content, ignore_header_errors, mnemonic_case.as_deref(), ignore_data, null_policy, read_policy, &ignore_comments)?;
+
+    // Release the GIL during parsing — read_las is pure Rust, no Python objects
+    let mut las = py.allow_threads(|| {
+        read_las(&content, ignore_header_errors, mnemonic_case.as_deref(), ignore_data, null_policy, read_policy, &ignore_comments)
+    })?;
     las.encoding = detected_encoding;
 
     // Apply index_unit override — also update curve and well units
