@@ -1,0 +1,131 @@
+name: Publish
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  version-gate:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compare Cargo.toml vs PyPI
+        id: check
+        run: |
+          CARGO_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo "version=$CARGO_VERSION" >> "$GITHUB_OUTPUT"
+
+          PYPI_VERSION=$(curl -sf https://pypi.org/pypi/las-rs/json \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['info']['version'])" \
+            2>/dev/null) || PYPI_VERSION="0.0.0"
+
+          echo "Cargo.toml=$CARGO_VERSION  PyPI=$PYPI_VERSION"
+
+          python3 -c "
+          cv = tuple(int(x) for x in '$CARGO_VERSION'.split('.'))
+          pv = tuple(int(x) for x in '$PYPI_VERSION'.split('.'))
+          print('should_publish=' + ('true' if cv > pv else 'false'))
+          " >> "$GITHUB_OUTPUT"
+
+  wheels-linux:
+    needs: version-gate
+    if: needs.version-gate.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          manylinux: auto
+          command: build
+          args: --release --out dist -i 3.10 3.11 3.12 3.13
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-linux
+          path: dist
+
+  wheels-macos:
+    needs: version-gate
+    if: needs.version-gate.outputs.should_publish == 'true'
+    runs-on: macos-14
+    strategy:
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-macos-${{ matrix.python }}
+          path: dist
+
+  wheels-windows:
+    needs: version-gate
+    if: needs.version-gate.outputs.should_publish == 'true'
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-windows-${{ matrix.python }}
+          path: dist
+
+  sdist:
+    needs: version-gate
+    if: needs.version-gate.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist
+
+  publish:
+    needs: [wheels-linux, wheels-macos, wheels-windows, sdist, version-gate]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: List artifacts
+        run: ls -lh dist/
+      - name: Tag release
+        run: |
+          git tag "v${{ needs.version-gate.outputs.version }}"
+          git push origin "v${{ needs.version-gate.outputs.version }}"
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
