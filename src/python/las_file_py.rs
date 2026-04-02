@@ -140,13 +140,11 @@ impl LASFile {
 
     #[getter]
     fn data<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyArray2<f64>>> {
-        // Stack all curve data arrays into a 2D array (n_rows x n_curves)
         let n_curves = self.curves_section.items.len();
         if n_curves == 0 {
             return Ok(PyArray2::from_vec2(py, &vec![]).unwrap());
         }
 
-        // Get number of rows from first curve
         let n_rows = match &self.curves_section.items[0] {
             ItemWrapper::Curve(c) => c.curve_data.len(),
             _ => 0,
@@ -157,26 +155,27 @@ impl LASFile {
             return Ok(PyArray2::from_vec2(py, &empty).unwrap());
         }
 
-        // Build row-major 2D array
-        let mut rows: Vec<Vec<f64>> = Vec::with_capacity(n_rows);
+        // Single flat allocation instead of 1M micro-Vecs
+        let mut flat = Vec::with_capacity(n_rows * n_curves);
         for row_idx in 0..n_rows {
-            let mut row = Vec::with_capacity(n_curves);
             for item in &self.curves_section.items {
                 match item {
                     ItemWrapper::Curve(c) => {
-                        if row_idx < c.curve_data.len() {
-                            row.push(c.curve_data[row_idx]);
+                        flat.push(if row_idx < c.curve_data.len() {
+                            c.curve_data[row_idx]
                         } else {
-                            row.push(f64::NAN);
-                        }
+                            f64::NAN
+                        });
                     }
-                    _ => row.push(f64::NAN),
+                    _ => flat.push(f64::NAN),
                 }
             }
-            rows.push(row);
         }
 
-        Ok(PyArray2::from_vec2(py, &rows).unwrap())
+        // Create 1D array and reshape to 2D — avoids Vec<Vec<f64>> overhead
+        let arr = numpy::PyArray1::from_vec(py, flat);
+        let reshaped = arr.call_method1("reshape", ((n_rows, n_curves),))?;
+        Ok(reshaped.downcast_into::<PyArray2<f64>>()?)
     }
 
     #[setter]
@@ -661,7 +660,7 @@ impl LASFile {
     // ----- JSON -----
 
     #[getter]
-    fn json(&self, py: Python<'_>) -> PyResult<String> {
+    fn json(&self) -> PyResult<String> {
         let mut root = serde_json::Map::new();
 
         // Metadata
@@ -937,7 +936,7 @@ impl LASFile {
     #[pyo3(signature = (target, version=None, wrap=None, mnemonics_header=false, fmt=None, column_fmt=None, len_numeric_field=None, data_section_header=None, **kwargs))]
     fn write(
         &self,
-        _py: Python<'_>,
+        py: Python<'_>,
         target: &Bound<'_, PyAny>,
         version: Option<f64>,
         wrap: Option<bool>,
