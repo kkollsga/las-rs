@@ -1,0 +1,49 @@
+~VERSION INFORMATION
+ VERS.                          3.0 : LAS VERSION 3.0
+ WRAP.                           NO : ONE LINE PER DEPTH STEP
+ DLM .                        COMMA : COLUMN DELIMITER (COMMA)
+~WELL INFORMATION
+ STRT.M               1450.0000    : START DEPTH
+ STOP.M               1452.0000    : STOP DEPTH
+ STEP.M                  1.0000    : STEP VALUE
+ NULL.               -9999.2500    : NULL VALUE
+ COMP.   MERIDIAN SUBSURFACE LTD.  : COMPANY
+ WELL.   THORNFIELD-6              : WELL NAME
+ FLD .   SILVERBOW BASIN           : FIELD NAME
+ LOC .   12-22-078-14W6            : LOCATION
+ STAT.   BRITISH COLUMBIA          : STATE/PROVINCE
+ CTRY.   CANADA                    : COUNTRY
+ SRVC.   APEX WIRELINE LTD.        : SERVICE COMPANY
+ DATE.   2018-07-14                : LOG DATE (YYYY-MM-DD)
+ UWI .   200121220780W600          : UNIQUE WELL ID
+~Log_Parameter
+ BHT .DEGC        118.5             : BOTTOM HOLE TEMPERATURE
+ BS  .MM          215.9             : BIT SIZE
+ MWT .KG/M3      1140.0             : MUD WEIGHT
+~Log_Definition
+ DEPT .M           : DEPTH INDEX
+ GR   .GAPI        : GAMMA RAY
+ RHOB .G/CC        : BULK DENSITY
+ NPHI .V/V         : NEUTRON POROSITY
+ LITH .            {S} : LITHOLOGY DESCRIPTION
+~Log_ASCII_Standard
+ 1450.0,55.231,2.512,0.241,SANDSTONE
+ 1451.0,78.645,2.634,0.198,SHALE
+ 1452.0,61.089,2.548,0.225,SANDY SHALE
+~Drilling_Definition
+ DEPT .M           : DEPTH
+ WOB  .KN          : WEIGHT ON BIT
+ RPM  .RPM         : ROTARY SPEED
+ ROP  .M/HR        : RATE OF PENETRATION
+~Drilling_ASCII_Standard
+ 1450.0,45.2,78.0,12.5
+ 1451.0,48.7,82.0,10.3
+ 1452.0,51.1,80.0,11.8
+~Tops_Definition
+ FORM .            {S} : FORMATION NAME
+ DEPT .M           : TOP DEPTH
+ BASE .M           : BASE DEPTH
+~Tops_ASCII_Standard
+ BELLOY SANDSTONE,1448.5,1452.0
+ BELLOY SHALE,1452.0,1460.0
+ HALFWAY FORMATION,1460.0,1475.5

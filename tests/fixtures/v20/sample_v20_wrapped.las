@@ -1,0 +1,40 @@
+~VERSION INFORMATION
+ VERS.                          2.0 : LAS VERSION 2.0
+ WRAP.                          YES : MULTIPLE LINES PER DEPTH STEP
+~WELL INFORMATION
+ STRT.FT            200.0000    : START DEPTH
+ STOP.FT            204.0000    : STOP DEPTH
+ STEP.FT              2.0000    : STEP VALUE
+ NULL.           -9999.2500    : NULL VALUE
+ COMP.      OCEANIC ENERGY INC. : COMPANY
+ WELL.       DEEP HORIZON #2    : WELL NAME
+ FLD .       GULF WATERS BLOCK  : FIELD NAME
+ LOC .       OCS-G 34513        : LOCATION
+ STAT.          LOUISIANA       : STATE
+ CTRY.          USA             : COUNTRY
+ DATE.          2003-11-24      : LOG DATE
+ UWI .    177-094-20131-0000    : UNIQUE WELL ID
+~CURVE INFORMATION
+ DEPT .FT               : DEPTH
+ DT   .US/FT            : SONIC TRANSIT TIME
+ GR   .GAPI             : GAMMA RAY
+ CALI .IN               : CALIPER
+ SP   .MV               : SPONTANEOUS POTENTIAL
+ RILD .OHMM             : DEEP RESISTIVITY
+ RILM .OHMM             : MEDIUM RESISTIVITY
+ RXO  .OHMM             : FLUSHED ZONE RESISTIVITY
+ NPHI .V/V              : NEUTRON POROSITY
+ DPHI .V/V              : DENSITY POROSITY
+~PARAMETER INFORMATION
+ BHT .DEGF     195.0     : BOTTOM HOLE TEMPERATURE
+ BS  .IN         8.5     : BIT SIZE
+~ASCII
+ 200.0000
+   85.440   28.310    8.620  -58.760   12.340   10.870
+    0.281    0.263
+ 202.0000
+  102.560   51.890    8.840  -67.540    8.910    7.450
+    0.219    0.201
+ 204.0000
+   88.120   31.560    8.680  -59.910   14.120   12.230
+    0.276    0.258
