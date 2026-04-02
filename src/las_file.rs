@@ -1973,11 +1973,11 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
         })
         .unwrap_or_else(|| vec!["#".to_string()]);
 
-    let index_unit_override = kwargs
-        .and_then(|kw| kw.get_item("index_unit").ok().flatten())
-        .and_then(|v| v.extract::<String>().ok());
+    let index_unit_override = kwarg_opt_string(kwargs, "index_unit");
+    let encoding = kwarg_opt_string(kwargs, "encoding");
+    let encoding_errors = kwarg_string(kwargs, "encoding_errors", "replace");
 
-    let (content, detected_encoding) = resolve_source(py, source)?;
+    let (content, detected_encoding) = resolve_source(py, source, encoding.as_deref(), &encoding_errors)?;
     let mut las = read_las(&content, ignore_header_errors, mnemonic_case.as_deref(), ignore_data, null_policy, read_policy, &ignore_comments)?;
     las.encoding = detected_encoding;
 
@@ -2034,7 +2034,7 @@ pub fn py_read(py: Python<'_>, source: &Bound<'_, PyAny>, kwargs: Option<&Bound<
     Ok(las)
 }
 
-fn resolve_source(_py: Python<'_>, source: &Bound<'_, PyAny>) -> PyResult<(String, Option<String>)> {
+fn resolve_source(_py: Python<'_>, source: &Bound<'_, PyAny>, encoding: Option<&str>, encoding_errors: &str) -> PyResult<(String, Option<String>)> {
     // Check if it's a string
     if let Ok(s) = source.extract::<String>() {
         // Multi-line string (LAS content)?
@@ -2058,7 +2058,7 @@ fn resolve_source(_py: Python<'_>, source: &Bound<'_, PyAny>) -> PyResult<(Strin
         }
 
         // Try to decode
-        return decode_bytes(&bytes);
+        return decode_bytes(&bytes, encoding, encoding_errors);
     }
 
     // Check for pathlib.Path
@@ -2066,7 +2066,7 @@ fn resolve_source(_py: Python<'_>, source: &Bound<'_, PyAny>) -> PyResult<(Strin
         if let Ok(s) = path_str.extract::<String>() {
             let bytes = std::fs::read(&s)
                 .map_err(|e| PyIOError::new_err(format!("Cannot read file: {}: {}", s, e)))?;
-            return decode_bytes(&bytes);
+            return decode_bytes(&bytes, encoding, encoding_errors);
         }
     }
 
@@ -2076,15 +2076,78 @@ fn resolve_source(_py: Python<'_>, source: &Bound<'_, PyAny>) -> PyResult<(Strin
             return Ok((s, None));
         }
         if let Ok(b) = content.extract::<Vec<u8>>() {
-            return decode_bytes(&b);
+            return decode_bytes(&b, encoding, encoding_errors);
         }
     }
 
     Err(PyIOError::new_err("Cannot read from source: expected filename, string, or file-like object"))
 }
 
-fn decode_bytes(bytes: &[u8]) -> PyResult<(String, Option<String>)> {
-    // BOM detection
+fn decode_bytes(bytes: &[u8], encoding: Option<&str>, encoding_errors: &str) -> PyResult<(String, Option<String>)> {
+    // If explicit encoding specified, use it
+    if let Some(enc) = encoding {
+        let enc_upper = enc.to_uppercase();
+        // Normalize common aliases
+        let enc_normalized = match enc_upper.as_str() {
+            "LATIN-1" | "LATIN1" | "ISO-8859-1" | "ISO8859-1" => "WINDOWS-1252",
+            "UTF-8-SIG" => "UTF-8",
+            other => other,
+        };
+        let (content, enc_name) = match enc_normalized {
+            "UTF-16-LE" | "UTF16-LE" => {
+                let (cow, _, had_errors) = encoding_rs::UTF_16LE.decode(bytes);
+                if encoding_errors == "strict" && had_errors {
+                    return Err(pyo3::exceptions::PyUnicodeDecodeError::new_err(
+                        format!("'{}' codec can't decode bytes", enc)
+                    ));
+                }
+                (cow.to_string(), enc.to_string())
+            }
+            "UTF-16-BE" | "UTF16-BE" => {
+                let (cow, _, had_errors) = encoding_rs::UTF_16BE.decode(bytes);
+                if encoding_errors == "strict" && had_errors {
+                    return Err(pyo3::exceptions::PyUnicodeDecodeError::new_err(
+                        format!("'{}' codec can't decode bytes", enc)
+                    ));
+                }
+                (cow.to_string(), enc.to_string())
+            }
+            "UTF-8" | "UTF8" => {
+                if encoding_errors == "strict" {
+                    match std::str::from_utf8(bytes) {
+                        Ok(s) => (s.to_string(), "utf-8".to_string()),
+                        Err(e) => {
+                            return Err(pyo3::exceptions::PyUnicodeDecodeError::new_err(
+                                format!("'utf-8' codec can't decode byte 0x{:02x} in position {}: invalid continuation byte",
+                                    bytes.get(e.valid_up_to()).copied().unwrap_or(0),
+                                    e.valid_up_to())
+                            ));
+                        }
+                    }
+                } else {
+                    (String::from_utf8_lossy(bytes).to_string(), "utf-8".to_string())
+                }
+            }
+            _ => {
+                // Try encoding_rs for other encodings
+                let label = enc_normalized.to_lowercase();
+                if let Some(encoder) = encoding_rs::Encoding::for_label(label.as_bytes()) {
+                    let (cow, _, had_errors) = encoder.decode(bytes);
+                    if encoding_errors == "strict" && had_errors {
+                        return Err(pyo3::exceptions::PyUnicodeDecodeError::new_err(
+                            format!("'{}' codec can't decode bytes", enc)
+                        ));
+                    }
+                    (cow.to_string(), enc.to_string())
+                } else {
+                    return Err(PyIOError::new_err(format!("Unknown encoding: {}", enc)));
+                }
+            }
+        };
+        return Ok((content, Some(enc_name)));
+    }
+
+    // Auto-detect: BOM detection
     if bytes.starts_with(b"\xEF\xBB\xBF") {
         return Ok((String::from_utf8_lossy(&bytes[3..]).to_string(), Some("utf-8-sig".to_string())));
     }
@@ -2098,6 +2161,15 @@ fn decode_bytes(bytes: &[u8]) -> PyResult<(String, Option<String>)> {
     }
 
     // Try UTF-8 first
+    if encoding_errors == "strict" {
+        if let Ok(s) = std::str::from_utf8(bytes) {
+            return Ok((s.to_string(), Some("utf-8".to_string())));
+        }
+        return Err(pyo3::exceptions::PyUnicodeDecodeError::new_err(
+            "'utf-8' codec can't decode bytes: invalid byte sequence"
+        ));
+    }
+
     if let Ok(s) = std::str::from_utf8(bytes) {
         return Ok((s.to_string(), Some("utf-8".to_string())));
     }
