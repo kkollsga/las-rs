@@ -328,7 +328,16 @@ fn parse_data_inner(
             idx += actual_cols;
         }
     } else {
-        // Normal (unwrapped) mode
+        // Normal (unwrapped) mode — pre-allocate columns
+        let estimated_rows = lines.len(); // upper bound
+        if n_curves > 0 {
+            columns = (0..n_curves)
+                .map(|_| Vec::with_capacity(estimated_rows))
+                .collect();
+        }
+
+        let inline_null = matches!(null_policy, NullPolicy::Strict);
+
         for line in lines {
             let trimmed = line.trim();
             if trimmed.is_empty() || is_comment(trimmed) {
@@ -346,13 +355,23 @@ fn parse_data_inner(
                 _ => cleaned.split_whitespace().collect(),
             };
 
+            // Grow columns if needed (for excess data columns)
             while columns.len() < tokens.len() {
                 let existing_rows = if columns.is_empty() { 0 } else { columns[0].len() };
-                columns.push(vec![f64::NAN; existing_rows]);
+                let mut col = Vec::with_capacity(estimated_rows);
+                col.resize(existing_rows, f64::NAN);
+                columns.push(col);
             }
 
             for (col_idx, token) in tokens.iter().enumerate() {
-                columns[col_idx].push(parse_token(token));
+                let val = parse_token(token);
+                // Inline null replacement for Strict policy (skip index column 0)
+                let val = if inline_null && col_idx > 0 && (val - null_value).abs() < 1e-10 {
+                    f64::NAN
+                } else {
+                    val
+                };
+                columns[col_idx].push(val);
             }
 
             for col_idx in tokens.len()..columns.len() {
@@ -361,8 +380,10 @@ fn parse_data_inner(
         }
     }
 
-    // Apply null replacement based on policy (skip column 0 = index)
-    apply_null_policy(&mut columns, null_value, null_policy);
+    // Apply null replacement for non-Strict policies (skip if already inlined)
+    if !matches!(null_policy, NullPolicy::Strict) {
+        apply_null_policy(&mut columns, null_value, null_policy);
+    }
 
     columns
 }
@@ -448,8 +469,10 @@ fn apply_null_policy(columns: &mut [Vec<f64>], null_value: f64, policy: &NullPol
     }
 }
 
+#[inline(always)]
 fn parse_token(token: &str) -> f64 {
-    token.trim().parse::<f64>().unwrap_or(f64::NAN)
+    // fast_float2 is 2-5x faster than str::parse for float parsing
+    fast_float2::parse(token).unwrap_or(f64::NAN)
 }
 
 /// Parse data section that may contain string columns.
