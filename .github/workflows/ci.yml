@@ -8,17 +8,50 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  rust:
+    name: Rust (pure-Rust core)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # Default features are now empty (pure Rust) — this is what crates.io
+      # consumers and docs.rs build, so it's the headline gate.
+      - name: Build (no default features)
+        run: cargo build --no-default-features --verbose
+      - name: Test (pure Rust)
+        run: cargo test --verbose
+      # Confirm the crate is publishable to crates.io without actually
+      # publishing. Catches missing/invalid manifest metadata early.
+      - name: cargo publish dry-run
+        run: cargo publish -p las_rs --dry-run --locked
+
+  python:
+    name: Python wheel + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Rust tests
-        run: cargo test
-      - name: Install package
+      # Compile-check the PyO3 bindings against a real libpython (setup-python
+      # provides it). `extension-module` is intentionally NOT set here so the
+      # bindings link normally; the maturin install below exercises the
+      # extension-module wheel path.
+      - name: Build python bindings
+        run: cargo build --features python
+      - name: Install package (maturin)
         run: pip install -e ".[dev]"
       - name: Python tests
         run: pytest tests/
+
+  # Single aggregate gate. The crates.io publish workflow waits on this so any
+  # failing CI job blocks a (permanent) crates.io publish.
+  ci-success:
+    name: CI success
+    needs: [rust, python]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "all CI jobs passed"

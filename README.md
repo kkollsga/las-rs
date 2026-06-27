@@ -1,16 +1,28 @@
 # las-rs
 
-A high-performance LAS file parser and writer for Python, written in Rust.
+A high-performance LAS file parser and writer, written in Rust with first-class Python bindings.
 
 Reads and writes LAS 1.2, 2.0, and 3.0 well log files. Designed as a fast, drop-in alternative to [lasio](https://github.com/kinverarity1/lasio).
 
+Available both as a Rust crate ([`las_rs`](https://crates.io/crates/las_rs) on crates.io — pure Rust, no Python dependency) and as a Python package ([`las-rs`](https://pypi.org/project/las-rs/) on PyPI).
+
 ## Installation
+
+Python:
 
 ```bash
 pip install las-rs
 ```
 
 Prebuilt wheels are available for Python 3.10 -- 3.13 on Linux (x86_64), macOS (ARM), and Windows (x64).
+
+Rust:
+
+```bash
+cargo add las_rs
+```
+
+The crate is pure Rust by default — no PyO3 or numpy in your dependency tree.
 
 ## Quick start
 
@@ -93,6 +105,45 @@ json_str = las.json
 depth_m  = las.depth_m    # Index converted to meters
 depth_ft = las.depth_ft   # Index converted to feet
 ```
+
+## Rust
+
+The same engine is usable directly from Rust, without the Python layer:
+
+```rust
+use las_rs::{read_file, parse, ReadOptions, NullPolicy};
+
+// Read a file from disk (encoding auto-detected).
+let las = read_file("welllog.las")?;
+
+// Header metadata.
+println!("well:       {:?}", las.well_value("WELL"));
+println!("index unit: {:?}", las.index_unit);
+
+// Curve data — NULLs are represented as f64::NAN.
+for name in las.curve_mnemonics() {
+    let n = las.curve_data(name).map_or(0, |d| d.len());
+    println!("{name}: {n} samples");
+}
+
+// Access the index (first) curve and a named curve.
+let depth = las.index().unwrap_or(&[]);
+if let Some(gr) = las.curve_data("GR") {
+    println!("first GR sample at depth {}: {}", depth[0], gr[0]);
+}
+
+// Parse from an in-memory string, with custom options.
+let opts = ReadOptions { null_policy: Some(NullPolicy::Common), ..Default::default() };
+let las2 = las_rs::parse_with("~VERSION\nVERS. 2.0:\n~ASCII\n", &opts)?;
+
+// Write back out.
+las.write_file("out.las")?;
+let text: String = las.to_las_string()?;
+# let _ = (parse, las2, text);
+Ok::<(), las_rs::LasError>(())
+```
+
+Full API docs: [docs.rs/las_rs](https://docs.rs/las_rs).
 
 ## License
 

@@ -1,18 +1,46 @@
 [package]
 name = "las_rs"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
+authors = ["Kristian dF Kollsgård <kkollsga@gmail.com>"]
+license = "MIT"
+description = "High-performance parser and writer for LAS (Log ASCII Standard) well-log files — LAS 1.2 / 2.0 / 3.0. Pure-Rust core; the optional `python` feature adds the PyO3 bindings that back the `las-rs` PyPI wheel."
+readme = "README.md"
+repository = "https://github.com/kkollsga/las-rs"
+homepage = "https://github.com/kkollsga/las-rs"
+documentation = "https://docs.rs/las_rs"
+keywords = ["las", "well-log", "geoscience", "petroleum", "parsing"]
+categories = ["parser-implementations", "science", "science::geo"]
+# Keep the crates.io artifact lean and Rust-focused: the Python wheel sources,
+# benchmarks, and editor/CI config aren't needed by Rust consumers. The Rust
+# integration test (`tests/`) and its fixtures stay so `cargo test` works.
+exclude = [
+    "/python/",
+    "/benchmarks/",
+    "/.benchmarks/",
+    "/.github/",
+    "/.vscode/",
+    "/.pytest_cache/",
+]
 
 [lib]
 name = "las_rs"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["python"]
+# Pure Rust by default — `cargo add las_rs` pulls no PyO3/numpy.
+default = []
+# Python bindings (the PyO3 + numpy layer under `src/python`). Enabled by
+# maturin when building the `las-rs` wheel; off for plain Rust consumers.
 python = ["dep:pyo3", "dep:numpy"]
+# `pyo3/extension-module` tells PyO3 not to link libpython. Kept in its own
+# feature (NOT folded into `python`) so `cargo test`/`cargo build` can still
+# link a normal binary; only the maturin wheel build turns it on. Never
+# build with `--all-features` — `extension-module` cannot link standalone.
+extension-module = ["pyo3/extension-module"]
 
 [dependencies]
-pyo3 = { version = "0.28", features = ["extension-module"], optional = true }
+pyo3 = { version = "0.28", optional = true }
 numpy = { version = "0.28", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -21,3 +49,9 @@ once_cell = "1"
 encoding_rs = "0.8"
 memchr = "2"
 fast-float2 = "0.2"
+
+# docs.rs builds with default (pure-Rust) features. The `python` feature is
+# intentionally excluded: `extension-module` can't link libpython on the
+# docs.rs builder, and the Python API is documented separately (PyPI/README).
+[package.metadata.docs.rs]
+all-features = false

@@ -1,0 +1,106 @@
+name: Publish to crates.io
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+jobs:
+  version-check:
+    name: Check if las_rs version needs publishing
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compare Cargo.toml version against crates.io
+        id: check
+        run: |
+          VERSION=$(grep -m 1 '^version' Cargo.toml | cut -d '"' -f 2)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "las_rs Cargo.toml version: $VERSION"
+
+          # crates.io API: 200 = version exists, 404 = not published, 403 =
+          # rate-limited / missing User-Agent. We treat ONLY 404 as the
+          # publish signal — any other status means "exists or can't tell,
+          # skip to be safe" (a 403 mistaken for "not published" would make
+          # `cargo publish` error with "crate already exists"). The UA with a
+          # contact email is required by crates.io's API policy.
+          UA="las-rs-ci/0.1 (https://github.com/kkollsga/las-rs)"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -A "$UA" "https://crates.io/api/v1/crates/las_rs/$VERSION")
+
+          if [ "$STATUS" = "404" ]; then
+            echo "las_rs $VERSION not on crates.io (HTTP 404) — will publish"
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "las_rs $VERSION already on crates.io or unverifiable (HTTP $STATUS) — skipping"
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  ci-gate:
+    name: Wait for CI to pass
+    needs: [version-check]
+    if: needs.version-check.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # Poll the GitHub Checks API for the CI aggregate gate (`CI success`).
+      # It `needs` every CI job, so it registers as a check run only minutes
+      # in — past lewagon/wait-on-check's discovery window — hence the manual
+      # poll. Waits up to 45 min; a non-success conclusion fails the publish.
+      - name: Wait for 'CI success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          deadline=$(( $(date +%s) + 2700 ))
+          while :; do
+            line=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" \
+              -q '.check_runs[] | select(.name=="CI success") | "\(.status) \(.conclusion // "")"' \
+              2>/dev/null | head -n1 || true)
+            status=${line%% *}
+            conclusion=${line#* }
+            if [ "$status" = "completed" ]; then
+              if [ "$conclusion" = "success" ]; then
+                echo "✅ CI success"
+                exit 0
+              fi
+              echo "🔴 CI success concluded: $conclusion"
+              exit 1
+            fi
+            [ -n "$status" ] && echo "CI success: $status…" \
+              || echo "CI success check not registered yet…"
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::timed out waiting for the 'CI success' check"
+              exit 1
+            fi
+            sleep 20
+          done
+
+  publish:
+    name: Publish las_rs to crates.io
+    needs: [version-check, ci-gate]
+    if: needs.version-check.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      # `--locked` honours Cargo.lock for a reproducible publish.
+      - name: Publish las_rs
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p las_rs --locked
+      - name: Tag crates.io release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="crate-v${{ needs.version-check.outputs.version }}"
+          git tag "$TAG"
+          git push origin "$TAG"

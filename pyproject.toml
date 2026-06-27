@@ -31,6 +31,8 @@ Repository = "https://github.com/kkollsga/las-rs"
 dev = ["pytest", "pandas"]
 
 [tool.maturin]
-features = ["pyo3/extension-module", "python"]
+# extension-module is enabled here (not as a Cargo default) so `cargo test`
+# can still link a normal binary. The wheel build turns both features on.
+features = ["python", "extension-module"]
 python-source = "python"
 module-name = "las_rs._native"
