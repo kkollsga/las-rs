@@ -88,6 +88,10 @@ jobs:
     needs: [version-check, ci-gate]
     if: needs.version-check.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
+    # `contents: write` lets the tag step push back to the repo; the default
+    # GITHUB_TOKEN is read-only otherwise (causes a 403 on `git push`).
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -97,9 +101,10 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish -p las_rs --locked
+      # Best-effort: the crate is already published by this point, so a tag
+      # failure must never fail the run.
       - name: Tag crates.io release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
         run: |
           TAG="crate-v${{ needs.version-check.outputs.version }}"
           git tag "$TAG"
