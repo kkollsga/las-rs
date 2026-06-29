@@ -117,6 +117,20 @@ fn reads_v30_comma_delimited_all_numeric() {
     assert!((rhob[0] - 2.512).abs() < 1e-9, "RHOB[0] = {}", rhob[0]);
 }
 
+#[test]
+fn index_resolves_by_depth_alias_when_not_first() {
+    // Column order is SN, DEPTH, GR — the index curve (DEPTH) is not column 0.
+    // index() must resolve it by the depth-alias set, not blindly return the
+    // first (SN) curve.
+    let las = read_file(fixture("v30/sample_v30_depth_alias.las")).expect("should parse");
+
+    assert_eq!(las.curve_mnemonics(), vec!["SN", "DEPTH", "GR"]);
+
+    let index = las.index().expect("resolves an index curve");
+    assert_eq!(index[0], 1450.0, "index should be DEPTH (col 1), not SN (col 0)");
+    assert_eq!(index[2], 1452.0);
+}
+
 // ---------------------------------------------------------------------------
 // Parsing from in-memory strings
 // ---------------------------------------------------------------------------

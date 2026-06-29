@@ -185,11 +185,14 @@ impl LASFile {
 
     #[getter]
     fn index<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, numpy::PyArray1<f64>>> {
-        if let Some(ItemWrapper::Curve(c)) = self.curves_section.items.first() {
-            Ok(numpy::PyArray1::from_vec(py, c.curve_data.clone()))
-        } else {
-            Ok(numpy::PyArray1::from_vec(py, vec![]))
+        // Resolve the index by depth/time alias (DEPT/DEPTH/MD/TVD/…), falling
+        // back to the first curve — same as the pure-Rust `index()` accessor.
+        if let Some(pos) = self.curves_section.index_curve_position() {
+            if let ItemWrapper::Curve(c) = &self.curves_section.items[pos] {
+                return Ok(numpy::PyArray1::from_vec(py, c.curve_data.clone()));
+            }
         }
+        Ok(numpy::PyArray1::from_vec(py, vec![]))
     }
 
     // ----- Curve manipulation -----

@@ -176,6 +176,17 @@ pub struct SectionItems {
     pub mnemonic_transforms: bool,
 }
 
+/// Mnemonics conventionally used for the index (depth / time) curve, in
+/// upper-case. Used to resolve which curve is the index when it is not simply
+/// the first column (e.g. a `DEPTH`/`MD`/`TVD` curve sitting elsewhere).
+pub const INDEX_ALIASES: &[&str] = &["DEPT", "DEPTH", "MD", "TVD", "TVDSS", "TVDKB", "TIME"];
+
+/// Whether `mnemonic` (case-insensitive, trimmed) names a depth/time index curve.
+pub fn is_index_alias(mnemonic: &str) -> bool {
+    let m = mnemonic.trim();
+    INDEX_ALIASES.iter().any(|a| a.eq_ignore_ascii_case(m))
+}
+
 impl SectionItems {
     pub fn compare_mnemonics(&self, a: &str, b: &str) -> bool {
         if self.mnemonic_transforms {
@@ -189,6 +200,22 @@ impl SectionItems {
         self.items.iter().position(|item| {
             self.compare_mnemonics(item.session_mnemonic(), mnemonic)
         })
+    }
+
+    /// Position of the index curve: the first item whose mnemonic is a known
+    /// depth/time alias ([`INDEX_ALIASES`]), or the first item if none match.
+    /// Returns `None` only when the section is empty. This keeps the common
+    /// "depth is the first column" case identical while also recovering the
+    /// index when a `DEPTH`/`MD`/… curve is not in column 0.
+    pub fn index_curve_position(&self) -> Option<usize> {
+        if self.items.is_empty() {
+            return None;
+        }
+        let aliased = self
+            .items
+            .iter()
+            .position(|item| is_index_alias(item.session_mnemonic()));
+        Some(aliased.unwrap_or(0))
     }
 
     pub fn assign_duplicate_suffixes_for(&mut self, test_mnemonic: &str) {

@@ -164,9 +164,12 @@ impl LASFile {
         self.get_curve(mnemonic).map(|c| c.curve_data.as_slice())
     }
 
-    /// The index (first) curve's samples — typically depth or time.
+    /// The index curve's samples — typically depth or time. Resolves to the
+    /// first curve whose mnemonic is a known depth/time alias (`DEPT`, `DEPTH`,
+    /// `MD`, `TVD`, …), falling back to the first curve when none match.
     pub fn index(&self) -> Option<&[f64]> {
-        match self.curves_section.items.first()? {
+        let pos = self.curves_section.index_curve_position()?;
+        match &self.curves_section.items[pos] {
             ItemWrapper::Curve(c) => Some(c.curve_data.as_slice()),
             _ => None,
         }

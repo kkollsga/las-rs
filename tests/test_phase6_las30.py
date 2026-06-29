@@ -223,3 +223,20 @@ def test_v30_curve_definition_title_parses():
     # ~Curve_Parameter folds into Parameter, just like ~Log_Parameter.
     param_mnemonics = [p.mnemonic for p in las.params]
     assert "BHT" in param_mnemonics
+
+
+# ===========================================================================
+# Index curve resolution by depth alias
+# ===========================================================================
+
+
+def test_v30_index_resolves_by_depth_alias():
+    """When the index curve is named DEPTH (not DEPT) and is not column 0,
+    ``las.index`` still resolves it via the depth-alias set rather than
+    returning the first (non-depth) curve."""
+    las = las_rs.read(fixture("v30", "sample_v30_depth_alias.las"))
+    mnemonics = [c.mnemonic for c in las.curves]
+    assert mnemonics == ["SN", "DEPTH", "GR"]
+    # index must be DEPTH (col 1: 1450..1452), not SN (col 0: 1,2,3).
+    assert las.index[0] == pytest.approx(1450.0)
+    assert las.index[2] == pytest.approx(1452.0)
