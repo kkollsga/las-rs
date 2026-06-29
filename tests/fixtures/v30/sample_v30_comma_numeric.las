@@ -8,15 +8,11 @@
  STEP.M                  1.0000    : STEP VALUE
  NULL.               -9999.2500    : NULL VALUE
  WELL.   THORNFIELD-6              : WELL NAME
-~Curve_Parameter
- BHT .DEGC        118.5             : BOTTOM HOLE TEMPERATURE
- MWT .KG/M3      1140.0             : MUD WEIGHT
-~Curve_Definition
+~Log_Definition
  DEPT .M           : DEPTH INDEX
  GR   .GAPI        : GAMMA RAY
  RHOB .G/CC        : BULK DENSITY
- NPHI .V/V         : NEUTRON POROSITY
-~Curve_ASCII_Standard
- 1450.0,55.231,2.512,0.241
- 1451.0,78.645,2.634,0.198
- 1452.0,61.089,2.548,0.225
+~Log_ASCII_Standard
+ 1450.0,55.231,2.512
+ 1451.0,78.645,2.634
+ 1452.0,61.089,2.548

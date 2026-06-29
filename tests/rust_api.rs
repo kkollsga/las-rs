@@ -82,6 +82,41 @@ fn reads_v30_comma_delimited_with_string_column() {
     );
 }
 
+#[test]
+fn reads_v30_curve_definition_section_titles() {
+    // A 3.0 file whose primary dataset uses the ~Curve_Definition /
+    // ~Curve_Parameter / ~Curve_ASCII_Standard titles (Petrel core-log exports)
+    // instead of ~Log_*. Regression: these used to fall through to a Custom
+    // section, so curves came back empty.
+    let las = read_file(fixture("v30/sample_v30_curvedef.las")).expect("v3.0 curve-def should parse");
+
+    assert_eq!(las.curve_mnemonics(), vec!["DEPT", "GR", "RHOB", "NPHI"]);
+
+    let depth = las.index().expect("has an index curve");
+    assert_eq!(depth[0], 1450.0);
+
+    let gr = las.curve_data("GR").expect("has GR");
+    assert!((gr[1] - 78.645).abs() < 1e-9, "GR[1] = {}", gr[1]);
+}
+
+#[test]
+fn reads_v30_comma_delimited_all_numeric() {
+    // A comma-delimited 3.0 file with NO string column. Regression for the
+    // comma-decimal-mark read policy fusing comma-separated columns
+    // (`1450.0,55.231` -> `1450.055.231`) when comma is the field delimiter,
+    // which silently produced all-NaN curves on the non-string-column path.
+    let las = read_file(fixture("v30/sample_v30_comma_numeric.las")).expect("v3.0 comma should parse");
+
+    assert_eq!(las.curve_mnemonics(), vec!["DEPT", "GR", "RHOB"]);
+
+    let dept = las.index().expect("has an index curve");
+    assert_eq!(dept[0], 1450.0);
+    assert_eq!(dept[2], 1452.0);
+
+    let rhob = las.curve_data("RHOB").expect("has RHOB");
+    assert!((rhob[0] - 2.512).abs() < 1e-9, "RHOB[0] = {}", rhob[0]);
+}
+
 // ---------------------------------------------------------------------------
 // Parsing from in-memory strings
 // ---------------------------------------------------------------------------

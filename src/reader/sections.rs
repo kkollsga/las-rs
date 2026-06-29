@@ -56,14 +56,24 @@ fn classify_section(title: &str) -> SectionKind {
     // Get the first "word" (up to first space or end)
     let first_word = upper.split_whitespace().next().unwrap_or("");
 
-    // LAS 3.0 section names
-    if upper.contains("LOG_DEFINITION") || upper.contains("LOG DEFINITION") {
+    // LAS 3.0 compound section names. The standard primary dataset is titled
+    // ~Log_Definition / ~Log_Parameter / ~Log_ASCII; Petrel and LAS-2.0-derived
+    // exports name the same primary dataset ~Curve_Definition / ~Curve_Parameter
+    // / ~Curve_ASCII. Recognize both the LOG and CURVE prefixes so either
+    // spelling parses. Secondary datasets (~Drilling_Definition, ~Tops_Definition,
+    // …) intentionally fall through to Custom and are retained as extra sections
+    // rather than merged into the primary Curves/Data.
+    if upper.contains("LOG_DEFINITION") || upper.contains("LOG DEFINITION")
+        || upper.contains("CURVE_DEFINITION") || upper.contains("CURVE DEFINITION") {
         return SectionKind::Curves;
     }
-    if upper.contains("LOG_PARAMETER") || upper.contains("LOG PARAMETER") {
+    if upper.contains("LOG_PARAMETER") || upper.contains("LOG PARAMETER")
+        || upper.contains("CURVE_PARAMETER") || upper.contains("CURVE PARAMETER") {
         return SectionKind::Parameter;
     }
-    if upper.contains("_DATA") || upper.starts_with("LOG_ASCII") || upper.starts_with("LOG ASCII") {
+    if upper.contains("_DATA")
+        || upper.starts_with("LOG_ASCII") || upper.starts_with("LOG ASCII")
+        || upper.starts_with("CURVE_ASCII") || upper.starts_with("CURVE ASCII") {
         if !upper.starts_with("A") {
             return SectionKind::Data;
         }

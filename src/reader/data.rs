@@ -67,6 +67,14 @@ pub fn parse_data_section_with_policy(
     read_policy: Option<&str>,
     ignore_comments: &[String],
 ) -> ParsedData {
+    // The `comma-decimal-mark` policy rewrites `<digit>,<digit>` → `<digit>.<digit>`
+    // to support European decimal commas. But when the file is *comma-delimited*
+    // those commas are field separators, not decimal marks — applying the rewrite
+    // would fuse adjacent columns (`1450.0,55.231` → `1450.055.231`) and corrupt
+    // the whole row. Comma-as-delimiter and comma-as-decimal-mark are mutually
+    // exclusive, so suppress the policy when the delimiter is a comma.
+    let read_policy = if delimiter == Some(',') { None } else { read_policy };
+
     // For wrapped mode, use the old parse_data_inner (no string auto-detect)
     if wrapped {
         let transformed: Vec<Cow<'_, str>>;

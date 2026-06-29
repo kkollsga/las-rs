@@ -207,7 +207,6 @@ def test_v30_comma_data_parsed():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="*_Definition (non-Log_) not yet classified as Curves")
 def test_v30_curve_definition_title_parses():
     """A 3.0 file whose curve section is titled ``~Curve_Definition`` (not
     ``~Log_Definition``) still recovers its curves and index.
