@@ -6,8 +6,9 @@ string-typed columns marked with ``{S}`` format codes, alternate column delimite
 (COMMA and TAB via the DLM field), and the section-name mapping rules that fold
 ``~Log_Definition`` into ``Curves`` and ``~Log_Parameter`` into ``Parameter``.
 
-All tests are marked xfail because the ``las_rs`` implementation has not yet
-been written.
+Also covers section-name classification beyond the ``Log_`` prefix: any
+``*_Definition`` section maps to Curves and any ``*_Parameter`` to Parameter,
+so a file whose curve section is titled ``~Curve_Definition`` still parses.
 """
 
 import os
@@ -44,6 +45,10 @@ def fixture(*parts):
 
 V30_FILE = fixture("v30", "sample_v30.las")
 V30_TAB_FILE = fixture("v30", "sample_v30_tab.las")
+# A 3.0 file whose sections use the ``~Curve_Definition`` / ``~Curve_Parameter``
+# / ``~Curve_Data`` titles instead of the ``Log_`` prefix. Petekio's Petrel
+# core-log exports use these, and they currently parse to *empty* curves.
+V30_CURVEDEF_FILE = fixture("v30", "sample_v30_curvedef.las")
 
 
 # ===========================================================================
@@ -51,7 +56,6 @@ V30_TAB_FILE = fixture("v30", "sample_v30_tab.las")
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_read_v30():
     """Reading a valid LAS 3.0 file returns a LASFile instance."""
     las = las_rs.read(V30_FILE)
@@ -63,14 +67,12 @@ def test_read_v30():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_version_value():
     """The VERS item in a LAS 3.0 file has value 3.0."""
     las = las_rs.read(V30_FILE)
     assert float(las.version["VERS"].value) == pytest.approx(3.0)
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_dlm_value():
     """The DLM item in the version section has value 'COMMA'."""
     las = las_rs.read(V30_FILE)
@@ -82,7 +84,6 @@ def test_v30_dlm_value():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_curves_from_log_definition():
     """~Log_Definition is mapped to las.curves (sections['Curves'])."""
     las = las_rs.read(V30_FILE)
@@ -93,7 +94,6 @@ def test_v30_curves_from_log_definition():
     assert "LITH" in mnemonics
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_params_from_log_parameter():
     """~Log_Parameter is mapped to las.params (sections['Parameter'])."""
     las = las_rs.read(V30_FILE)
@@ -102,7 +102,6 @@ def test_v30_params_from_log_parameter():
     assert "MWT" in param_mnemonics
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_log_parameter_not_separate():
     """'Log_Parameter' does not appear as a standalone key in sections —
     it is merged into 'Parameter'."""
@@ -115,7 +114,6 @@ def test_v30_log_parameter_not_separate():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_data_reads():
     """The main log data section has exactly 3 rows (depths 1450–1452)."""
     las = las_rs.read(V30_FILE)
@@ -128,7 +126,6 @@ def test_v30_data_reads():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_string_column():
     """The LITH column (marked {S}) contains string values, not only floats.
 
@@ -147,7 +144,6 @@ def test_v30_string_column():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_extra_sections_stored():
     """Non-standard sections such as Drilling_Definition and Tops_Definition
     are retained in the sections dictionary."""
@@ -164,7 +160,6 @@ def test_v30_extra_sections_stored():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_tab_delimiter_normal():
     """sample_v30_tab.las (DLM TAB) is read correctly with engine='normal'."""
     las = las_rs.read(V30_TAB_FILE, engine="normal")
@@ -174,7 +169,6 @@ def test_v30_tab_delimiter_normal():
     assert las.data.shape[1] == 5
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_tab_delimiter_numpy():
     """sample_v30_tab.las (DLM TAB) is read correctly with engine='numpy'."""
     las = las_rs.read(V30_TAB_FILE, engine="numpy")
@@ -187,7 +181,6 @@ def test_v30_tab_delimiter_numpy():
 # ===========================================================================
 
 
-@pytest.mark.xfail(reason="not yet implemented")
 def test_v30_comma_data_parsed():
     """Numeric columns in the comma-delimited file parse to the correct floats.
 
@@ -207,3 +200,27 @@ def test_v30_comma_data_parsed():
 
     assert dept[1] == pytest.approx(1451.0)
     assert gr[1] == pytest.approx(78.645)
+
+
+# ===========================================================================
+# Section titles beyond the ``Log_`` prefix (~Curve_Definition etc.)
+# ===========================================================================
+
+
+@pytest.mark.xfail(reason="*_Definition (non-Log_) not yet classified as Curves")
+def test_v30_curve_definition_title_parses():
+    """A 3.0 file whose curve section is titled ``~Curve_Definition`` (not
+    ``~Log_Definition``) still recovers its curves and index.
+
+    Regression for petekio's Petrel core-log exports, which came back with
+    empty ``curve_mnemonics()``/``index()`` because only ``Log_Definition`` was
+    special-cased.
+    """
+    las = las_rs.read(V30_CURVEDEF_FILE)
+    mnemonics = [c.mnemonic for c in las.curves]
+    assert mnemonics == ["DEPT", "GR", "RHOB", "NPHI"]
+    assert las.index[0] == pytest.approx(1450.0)
+    assert las.curves["GR"].data[1] == pytest.approx(78.645)
+    # ~Curve_Parameter folds into Parameter, just like ~Log_Parameter.
+    param_mnemonics = [p.mnemonic for p in las.params]
+    assert "BHT" in param_mnemonics
